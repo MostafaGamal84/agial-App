@@ -7,6 +7,7 @@ import '../models/circle_report.dart';
 import '../models/user.dart';
 import '../services/report_service.dart';
 import '../widgets/report_filters.dart';
+import '../widgets/toast.dart';
 import 'login_screen.dart';
 import 'report_form_screen.dart';
 
@@ -18,6 +19,8 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
+  String? _lastErrorMessage;
+
   @override
   void initState() {
     super.initState();
@@ -33,11 +36,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
     });
   }
 
+  void _maybeShowError(String? message) {
+    if (message == null) {
+      _lastErrorMessage = null;
+      return;
+    }
+    if (_lastErrorMessage == message) return;
+    _lastErrorMessage = message;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showToast(context, message, isError: true);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     final controller = context.watch<ReportController>();
     final user = auth.currentUser;
+
+    _maybeShowError(controller.errorMessage);
 
     if (user == null) {
       return const LoginScreen();
@@ -63,14 +81,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await Navigator.of(context).push(
+          final result = await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => ReportFormScreen(currentUser: user),
             ),
           );
-          if (mounted) {
-            controller.refresh(user);
+          if (!mounted) return;
+          if (result is String && result.isNotEmpty) {
+            showToast(context, result);
           }
+          controller.refresh(user);
         },
         icon: const Icon(Icons.add),
         label: const Text('إضافة تقرير'),
@@ -85,14 +105,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
               controller.updateFilter(newFilter, user);
             },
           ),
-          if (controller.errorMessage != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Text(
-                controller.errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
           Expanded(
             child: controller.isLoading
                 ? const Center(child: CircularProgressIndicator.adaptive())
@@ -111,7 +123,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                               trailing: IconButton(
                                 icon: const Icon(Icons.edit),
                                 onPressed: () async {
-                                  await Navigator.of(context).push(
+                                  final result = await Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (_) => ReportFormScreen(
                                         currentUser: user,
@@ -119,9 +131,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                       ),
                                     ),
                                   );
-                                  if (mounted) {
-                                    controller.refresh(user);
+                                  if (!mounted) return;
+                                  if (result is String && result.isNotEmpty) {
+                                    showToast(context, result);
                                   }
+                                  controller.refresh(user);
                                 },
                               ),
                             ),

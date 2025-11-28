@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
 import 'reports_screen.dart';
+import '../widgets/toast.dart';
 
 class OTPScreen extends StatefulWidget {
   const OTPScreen({super.key, required this.loginValue});
@@ -58,7 +59,20 @@ class _OTPScreenState extends State<OTPScreen> {
                       : () async {
                           if (!_formKey.currentState!.validate()) return;
                           final user = await auth.verify(_otpController.text);
-                          if (user != null && mounted) {
+                          if (!mounted) return;
+                          if (auth.errorMessage != null) {
+                            showToast(
+                              context,
+                              auth.errorMessage!,
+                              isError: true,
+                            );
+                            return;
+                          }
+                          if (user != null) {
+                            showToast(
+                              context,
+                              'تم تسجيل الدخول بنجاح',
+                            );
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
                                 builder: (_) => const ReportsScreen(),
@@ -71,13 +85,6 @@ class _OTPScreenState extends State<OTPScreen> {
                       ? const CircularProgressIndicator.adaptive()
                       : const Text('تأكيد'),
                 ),
-                if (auth.errorMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    auth.errorMessage!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
-                  ),
-                ],
               ],
             ),
           ),

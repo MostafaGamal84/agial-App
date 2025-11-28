@@ -6,6 +6,7 @@ import '../models/circle_report.dart';
 import '../models/student.dart';
 import '../models/user.dart';
 import '../services/report_service.dart';
+import '../widgets/toast.dart';
 
 class ReportFormScreen extends StatefulWidget {
   const ReportFormScreen({
@@ -114,6 +115,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       await _loadDropdowns(existing: existing);
     } catch (e) {
       _error = e.toString();
+      if (mounted) {
+        showToast(context, _error!, isError: true);
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -397,21 +401,13 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                             const SizedBox(height: 12),
                             _buildText('تقدير الماضي البعيد', _farthestPastRateController),
                             const SizedBox(height: 12),
-                            _buildText('ملاحظات أخرى', _otherController, maxLines: 3),
-                          ],
-                          const SizedBox(height: 20),
-                          if (_error != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                _error!,
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _isSaving ? null : () => _submit(reportService),
+                          _buildText('ملاحظات أخرى', _otherController, maxLines: 3),
+                        ],
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isSaving ? null : () => _submit(reportService),
                               child: _isSaving
                                   ? const SizedBox(
                                       height: 20,
@@ -481,11 +477,17 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       } else {
         await reportService.createReport(draft: draft, currentUser: widget.currentUser);
       }
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        final message = isEditing ? 'تم تحديث التقرير بنجاح' : 'تم إنشاء التقرير بنجاح';
+        Navigator.of(context).pop(message);
+      }
     } catch (e) {
       setState(() {
         _error = e.toString();
       });
+      if (mounted) {
+        showToast(context, _error!, isError: true);
+      }
     } finally {
       if (mounted) {
         setState(() {
