@@ -50,16 +50,17 @@ class _ReportFiltersState extends State<ReportFilters> {
       supervisorItems = supervisors
           .map((sup) => DropdownMenuItem(value: sup.id, child: Text(sup.fullName)))
           .toList();
-      _selectedSupervisorId = widget.initialFilter.teacherId != null
-          ? supervisors
-              .firstWhere(
-                (sup) => widget.reportService
-                    .getTeachers(managerId: sup.id)
-                    .any((t) => t.id == widget.initialFilter.teacherId),
-                orElse: () => supervisors.isEmpty ? null : supervisors.first,
-              )
-              ?.id
-          : (supervisors.isNotEmpty ? supervisors.first.id : null);
+      if (widget.initialFilter.teacherId != null && supervisors.isNotEmpty) {
+        final matched = supervisors.firstWhere(
+          (sup) => widget.reportService
+              .getTeachers(managerId: sup.id)
+              .any((t) => t.id == widget.initialFilter.teacherId),
+          orElse: () => supervisors.first,
+        );
+        _selectedSupervisorId = matched.id;
+      } else {
+        _selectedSupervisorId = supervisors.isNotEmpty ? supervisors.first.id : null;
+      }
       _loadTeachers();
     } else if (user.isManager) {
       _selectedSupervisorId = user.id;
