@@ -159,74 +159,125 @@ class _ReportFiltersState extends State<ReportFilters> {
     }
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: Column(
-        children: [
-          if (user.isAdmin || user.isBranchLeader) ...[
-            DropdownButtonFormField<String>(
-              value: _selectedSupervisorId,
-              decoration: const InputDecoration(labelText: 'المشرف', border: OutlineInputBorder()),
-              items: supervisors
-                  .map((sup) => DropdownMenuItem(value: sup.id, child: Text(sup.fullName)))
-                  .toList(),
-              onChanged: (value) {
-                _selectedSupervisorId = value;
-                _loadTeachers();
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (!user.isTeacher)
-            DropdownButtonFormField<String>(
-              value: _selectedTeacherId,
-              decoration: const InputDecoration(labelText: 'المعلم', border: OutlineInputBorder()),
-              items: teachers
-                  .map(
-                    (teacher) => DropdownMenuItem(
-                      value: teacher.id,
-                      child: Text(teacher.fullName),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                _selectedTeacherId = value;
-                _loadCircles();
-              },
-            ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _selectedCircleId,
-            decoration: const InputDecoration(labelText: 'الحلقة', border: OutlineInputBorder()),
-            items: circles
-                .map(
-                  (circle) => DropdownMenuItem(
-                    value: circle.id,
-                    child: Text(circle.name),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              if (user.isAdmin || user.isBranchLeader) ...[
+                DropdownButtonFormField<String>(
+                  value: _selectedSupervisorId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'المشرف',
+                    hintText: 'اختر المشرف',
+                    border: OutlineInputBorder(),
+                    filled: true,
                   ),
-                )
-                .toList(),
-            onChanged: (value) {
-              _selectedCircleId = value;
-              _loadStudents();
-            },
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _selectedStudentId,
-            decoration: const InputDecoration(labelText: 'الطالب', border: OutlineInputBorder()),
-            items: students
-                .map(
-                  (student) => DropdownMenuItem(
-                    value: student.id,
-                    child: Text(student.fullName),
+                  items: supervisors
+                      .map((sup) => DropdownMenuItem(value: sup.id, child: Text(sup.fullName)))
+                      .toList(),
+                  onTap: () {
+                    if (supervisors.isEmpty) {
+                      _bootstrap();
+                    }
+                  },
+                  onChanged: (value) {
+                    _selectedSupervisorId = value;
+                    _loadTeachers();
+                  },
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (!user.isTeacher)
+                DropdownButtonFormField<String>(
+                  value: _selectedTeacherId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'المعلم',
+                    hintText: 'اختر المعلم',
+                    border: OutlineInputBorder(),
+                    filled: true,
                   ),
-                )
-                .toList(),
-            onChanged: (value) {
-              _selectedStudentId = value;
-              _notify();
-            },
+                  items: teachers
+                      .map(
+                        (teacher) => DropdownMenuItem(
+                          value: teacher.id,
+                          child: Text(teacher.fullName),
+                        ),
+                      )
+                      .toList(),
+                  onTap: () {
+                    if (teachers.isEmpty) {
+                      _loadTeachers();
+                    }
+                  },
+                  onChanged: (value) {
+                    _selectedTeacherId = value;
+                    _loadCircles();
+                  },
+                ),
+              if (!user.isTeacher) const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedCircleId,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'الحلقة',
+                  hintText: 'اختر الحلقة',
+                  border: OutlineInputBorder(),
+                  filled: true,
+                ),
+                items: circles
+                    .map(
+                      (circle) => DropdownMenuItem(
+                        value: circle.id,
+                        child: Text(circle.name),
+                      ),
+                    )
+                    .toList(),
+                onTap: () {
+                  if (circles.isEmpty && _selectedTeacherId != null) {
+                    _loadCircles();
+                  }
+                },
+                onChanged: (value) {
+                  _selectedCircleId = value;
+                  _loadStudents();
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedStudentId,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'الطالب',
+                  hintText: 'اختر الطالب',
+                  border: OutlineInputBorder(),
+                  filled: true,
+                ),
+                items: students
+                    .map(
+                      (student) => DropdownMenuItem(
+                        value: student.id,
+                        child: Text(student.fullName),
+                      ),
+                    )
+                    .toList(),
+                onTap: () {
+                  if (students.isEmpty && _selectedCircleId != null) {
+                    _loadStudents();
+                  }
+                },
+                onChanged: (value) {
+                  _selectedStudentId = value;
+                  _notify();
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
