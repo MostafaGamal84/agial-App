@@ -14,7 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _loginController = TextEditingController(text: 'admin@example.com');
+  final _loginController = TextEditingController(text: 'admin@test.com');
   final _passwordController = TextEditingController();
 
   @override
@@ -67,14 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              SizedBox(height: 6),
-                              Text(
-                                'للارتقاء بمعايير الجودة في التعليم القرآني',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
-                                ),
-                              ),
+                              
                               SizedBox(height: 14),
                               Wrap(
                                 alignment: WrapAlignment.end,
@@ -119,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             border: Border.all(color: Colors.white.withOpacity(0.08)),
                           ),
                           child: Image.asset(
-                            'assets/images/app_icon.png',
+                            'assets/images/logo.jpg',
                             width: 96,
                             height: 96,
                             fit: BoxFit.contain,

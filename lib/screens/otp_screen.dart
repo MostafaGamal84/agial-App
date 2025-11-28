@@ -76,7 +76,7 @@ class _OTPScreenState extends State<OTPScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Image.asset(
-                        'assets/images/app_icon.png',
+                        'assets/images/logo.jpg',
                         height: 72,
                         fit: BoxFit.contain,
                       ),
@@ -162,12 +162,12 @@ class _OTPScreenState extends State<OTPScreen> {
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: const BorderSide(
-                                        color: Color(0xFFF3B52C),
+                                        color: Color.fromARGB(255, 0, 55, 173),
                                         width: 2,
                                       ),
                                     ),
                                   ),
-                                  inputFormatters: const [
+                                  inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,
                                     LengthLimitingTextInputFormatter(1),
                                   ],
