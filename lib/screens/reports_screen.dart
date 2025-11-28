@@ -21,12 +21,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final auth = context.read<AuthController>();
       final controller = context.read<ReportController>();
       final user = auth.currentUser;
       if (user != null) {
-        controller.refresh(user);
+        await controller.restoreFilter(user);
+        if (!mounted) return;
+        await controller.refresh(user);
       }
     });
   }
@@ -46,8 +48,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
         title: const Text('تقارير الحلقات'),
         actions: [
           IconButton(
-            onPressed: () {
-              auth.logout();
+            onPressed: () async {
+              await auth.logout();
+              if (!mounted) return;
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const LoginScreen()),
                 (_) => false,

@@ -53,7 +53,13 @@ class MyApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: auth.currentUser == null ? const LoginScreen() : const ReportsScreen(),
+      home: auth.isRestoring
+          ? const Scaffold(
+              body: Center(child: CircularProgressIndicator.adaptive()),
+            )
+          : auth.currentUser == null
+              ? const LoginScreen()
+              : const ReportsScreen(),
     );
   }
 }

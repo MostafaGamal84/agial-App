@@ -46,4 +46,14 @@ class UserProfile {
       managerId: json['managerId']?.toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': id,
+      'fullName': fullName,
+      'userTypeId': userType.id,
+      'branchId': branchId,
+      'managerId': managerId,
+    };
+  }
 }

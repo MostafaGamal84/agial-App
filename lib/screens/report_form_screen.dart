@@ -321,8 +321,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                               if (value == null) return;
                               setState(() {
                                 _status = value;
-                                if (_status == AttendStatus.excusedAbsence) {
-                                  _minutesController.clear();
+                                if (_status != AttendStatus.attended) {
                                   _newFromController.clear();
                                   _newToController.clear();
                                   _newRateController.clear();
@@ -334,6 +333,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                                   _farthestPastRateController.clear();
                                   _otherController.clear();
                                   _selectedSurah = null;
+                                }
+                                if (_status == AttendStatus.excusedAbsence) {
+                                  _minutesController.clear();
                                 }
                               });
                             },
