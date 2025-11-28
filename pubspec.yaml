@@ -1,0 +1,72 @@
+name: said_alakhtha
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  audioplayers: ^5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+  flutter_lints: ^5.0.0
+
+# ✅ هذا القسم لازم يكون خارج flutter:
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/main.png
+    - assets/images/levelBackground.png
+    - assets/images/false.png
+    - assets/images/true.png
+    - assets/sounds/intro.mp3
+    - assets/images/LevelOne/bad1.jpg
+    - assets/images/LevelOne/bad2.jpg
+    - assets/images/LevelOne/bad3.jpg
+    - assets/images/LevelOne/bad4.jpg
+    - assets/images/LevelOne/bad5.jpg
+    - assets/images/LevelOne/good1.jpg
+    - assets/images/LevelOne/good2.jpg
+    - assets/images/LevelOne/good3.jpg
+    - assets/images/LevelOne/good4.jpg
+    - assets/images/LevelOne/good5.jpg
+    - assets/images/banner.png
+    - assets/images/LevelTwo/levelTwoBackground.jpg
+    - assets/images/LevelTwo/finishLevelTwo.jpg
+    - assets/sounds/correct.mp3
+    - assets/sounds/claim.mp3
+    - assets/images/LevelThree/levelThreeBackground.jpg
+    - assets/images/LevelThree/thinking.jpg
+    - assets/images/LevelThree/happy.jpg
+    - assets/images/LevelThree/correct1.png
+    - assets/images/LevelThree/wrong1.png
+    - assets/images/LevelThree/correct2.png
+    - assets/images/LevelThree/wrong2.png
+    - assets/images/LevelThree/correct3.png
+    - assets/images/LevelThree/wrong3.png
+    - assets/images/LevelThree/correct4.png
+    - assets/images/LevelThree/wrong4.png
+    - assets/images/LevelThree/correct5.png
+    - assets/images/LevelThree/wrong5.png
+    - assets/images/LevelThree/correct6.png
+    - assets/images/LevelThree/wrong6.png
+    - assets/images/LevelThree/correct7.png
+    - assets/images/LevelThree/wrong7.png
+    - assets/images/LevelThree/sad.jpg
+    - assets/images/finish.png
+
