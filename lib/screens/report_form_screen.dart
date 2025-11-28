@@ -94,11 +94,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _error = null;
     });
     try {
-      final reportService = context.read<ReportService>();
-      CircleReport? existing = widget.existingReport;
-      if (existing != null) {
-        existing = await reportService.fetchReport(existing.id);
-      }
+      final CircleReport? existing = widget.existingReport;
       _status = existing?.attendStatueId ?? AttendStatus.attended;
       _minutesController.text = existing?.minutes?.toString() ?? '';
       _newFromController.text = existing?.newFrom ?? '';
