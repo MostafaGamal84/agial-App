@@ -36,4 +36,14 @@ class UserProfile {
   bool get isBranchLeader => userType == UserType.branchLeader;
   bool get isManager => userType == UserType.manager;
   bool get isTeacher => userType == UserType.teacher;
+
+  factory UserProfile.fromApi(Map<String, dynamic> json) {
+    return UserProfile(
+      id: json['userId']?.toString() ?? '',
+      fullName: json['fullName']?.toString() ?? '',
+      userType: UserType.fromId(json['userTypeId']?.toString() ?? '4'),
+      branchId: json['branchId']?.toString() ?? '',
+      managerId: json['managerId']?.toString(),
+    );
+  }
 }

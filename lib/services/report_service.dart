@@ -1,153 +1,110 @@
 import '../models/circle.dart';
 import '../models/circle_report.dart';
-import '../models/student.dart';
 import '../models/user.dart';
-import 'mock_data_store.dart';
+import 'api_client.dart';
 
 class ReportService {
-  ReportService(this.dataStore);
+  ReportService(this._apiClient);
 
-  final MockDataStore dataStore;
-  int _reportCounter = 10;
+  final ApiClient _apiClient;
 
-  List<UserProfile> getSupervisors({String? branchId}) {
-    return dataStore.users.where((user) {
-      final matchesBranch = branchId == null || user.branchId == branchId;
-      return user.userType == UserType.manager && matchesBranch;
-    }).toList();
+  Future<List<UserProfile>> fetchSupervisors({String? branchId}) async {
+    final response = await _apiClient.get('/UsersForGroups/GetUsersForSelects', query: {
+      'userTypeId': UserType.manager.id,
+      if (branchId != null) 'branchId': branchId,
+    });
+    final items = response['result'] as List<dynamic>? ?? response['items'] as List<dynamic>? ?? [];
+    return items.map((item) => UserProfile.fromApi(item as Map<String, dynamic>)).toList();
   }
 
-  List<UserProfile> getTeachers({String? managerId, String? branchId}) {
-    return dataStore.users.where((user) {
-      final matchesManager = managerId == null || user.managerId == managerId;
-      final matchesBranch = branchId == null || user.branchId == branchId;
-      return user.userType == UserType.teacher && matchesManager && matchesBranch;
-    }).toList();
+  Future<List<UserProfile>> fetchTeachers({String? managerId, String? branchId}) async {
+    final query = <String, dynamic>{'userTypeId': UserType.teacher.id};
+    if (managerId != null) query['managerId'] = managerId;
+    if (branchId != null) query['branchId'] = branchId;
+    final response = await _apiClient.get('/UsersForGroups/GetUsersForSelects', query: query);
+    final items = response['result'] as List<dynamic>? ?? response['items'] as List<dynamic>? ?? [];
+    return items.map((item) => UserProfile.fromApi(item as Map<String, dynamic>)).toList();
   }
 
-  List<Circle> getCircles({String? teacherId}) {
-    return dataStore.circles
-        .where((circle) => teacherId == null || circle.teacherId == teacherId)
-        .toList();
+  Future<List<Circle>> fetchCircles({required String teacherId, int maxResultCount = 200}) async {
+    final response = await _apiClient.get('/Circle/GetResultsByFilter', query: {
+      'teacherId': teacherId,
+      'SkipCount': 0,
+      'MaxResultCount': maxResultCount,
+    });
+    final result = response['result'] ?? response;
+    final items = (result['items'] ?? []) as List<dynamic>;
+    return items.map((item) => Circle.fromApi(item as Map<String, dynamic>)).toList();
   }
 
-  Circle getCircle(String id) {
-    final circle = dataStore.circles.firstWhere((item) => item.id == id);
-    final relatedStudents = dataStore.students
-        .where((student) => student.circleId == circle.id)
-        .toList();
-    return Circle(
-      id: circle.id,
-      name: circle.name,
-      teacherId: circle.teacherId,
-      branchId: circle.branchId,
-      students: relatedStudents,
-    );
+  Future<Circle> fetchCircle(String id) async {
+    final response = await _apiClient.get('/Circle/Get', query: {'id': id});
+    final result = response['result'] ?? response;
+    return Circle.fromApi(result as Map<String, dynamic>);
   }
 
-  Student? getStudent(String id) {
-    try {
-      return dataStore.students.firstWhere((student) => student.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  UserProfile? getTeacher(String id) {
-    try {
-      return dataStore.users.firstWhere((user) => user.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  String getCircleName(String id) {
-    return dataStore.circles.firstWhere((circle) => circle.id == id).name;
-  }
-
-  List<ReportDisplayRow> getReports({
+  Future<List<ReportDisplayRow>> fetchReports({
     required ReportFilter filter,
     required UserProfile currentUser,
-  }) {
-    var filtered = dataStore.reports.toList();
+  }) async {
+    final query = <String, dynamic>{
+      'SkipCount': 0,
+      'MaxResultCount': 200,
+      if (filter.searchTerm?.isNotEmpty == true) 'SearchTerm': filter.searchTerm,
+      if (filter.circleId != null) 'circleId': filter.circleId,
+      if (filter.studentId != null) 'studentId': filter.studentId,
+    };
 
-    // Role-based scoping
     if (currentUser.isTeacher) {
-      filtered = filtered
-          .where((report) => report.teacherId == currentUser.id)
-          .toList();
-    } else if (currentUser.isManager) {
-      final managedTeachers = getTeachers(managerId: currentUser.id)
-          .map((teacher) => teacher.id)
-          .toSet();
-      filtered = filtered
-          .where((report) => managedTeachers.contains(report.teacherId))
-          .toList();
-    } else if (currentUser.isBranchLeader) {
-      final branchTeachers = getTeachers(branchId: currentUser.branchId)
-          .map((teacher) => teacher.id)
-          .toSet();
-      filtered = filtered
-          .where((report) => branchTeachers.contains(report.teacherId))
-          .toList();
+      query['teacherId'] = currentUser.id;
+    } else if (filter.teacherId != null) {
+      query['teacherId'] = filter.teacherId;
     }
 
-    // User-selected filters
-    if (filter.teacherId != null) {
-      filtered =
-          filtered.where((report) => report.teacherId == filter.teacherId).toList();
-    }
-    if (filter.circleId != null) {
-      filtered = filtered.where((report) => report.circleId == filter.circleId).toList();
-    }
-    if (filter.studentId != null) {
-      filtered =
-          filtered.where((report) => report.studentId == filter.studentId).toList();
-    }
-    if (filter.searchTerm != null && filter.searchTerm!.isNotEmpty) {
-      final term = filter.searchTerm!.toLowerCase();
-      filtered = filtered.where((report) {
-        final student = getStudent(report.studentId);
-        return student?.fullName.toLowerCase().contains(term) ?? false;
-      }).toList();
-    }
+    final response = await _apiClient.get('/CircleReport/GetResultsByFilter', query: query);
+    final result = response['result'] ?? response;
+    final items = (result['items'] ?? []) as List<dynamic>;
 
-    return filtered.map((report) {
-      final student = getStudent(report.studentId)!;
-      final teacher = getTeacher(report.teacherId)!;
+    return items.map((item) {
+      final reportMap = item as Map<String, dynamic>;
+      final report = CircleReport.fromApi(reportMap);
+      final studentName = reportMap['studentName']?.toString() ??
+          (reportMap['student'] is Map<String, dynamic>
+              ? (reportMap['student'] as Map<String, dynamic>)['fullName']?.toString()
+              : '');
+      final teacherName = reportMap['teacherName']?.toString() ??
+          (reportMap['teacher'] is Map<String, dynamic>
+              ? (reportMap['teacher'] as Map<String, dynamic>)['fullName']?.toString()
+              : '');
       return ReportDisplayRow(
         report: report,
-        teacher: teacher,
-        student: student,
-        circleName: getCircleName(report.circleId),
+        teacherName: teacherName ?? '',
+        studentName: studentName ?? '',
+        circleName: reportMap['circleName']?.toString() ?? '',
       );
     }).toList();
   }
 
-  CircleReport createReport({
-    required CircleReport draft,
-    required UserProfile currentUser,
-  }) {
-    if (currentUser.isTeacher) {
-      draft = draft.copyWith(teacherId: currentUser.id);
-    }
-    if (currentUser.isManager) {
-      draft = draft.copyWith(managerId: currentUser.id);
-    }
-    final report = draft.copyWith(
-      id: 'r-${_reportCounter++}',
-      creationTime: DateTime.now(),
-    );
-    dataStore.reports.insert(0, report);
-    return report;
+  Future<CircleReport> fetchReport(String id) async {
+    final response = await _apiClient.get('/CircleReport/Get', query: {'id': id});
+    final result = response['result'] ?? response;
+    return CircleReport.fromApi(result as Map<String, dynamic>);
   }
 
-  CircleReport updateReport(CircleReport updated) {
-    final index = dataStore.reports.indexWhere((r) => r.id == updated.id);
-    if (index == -1) {
-      throw Exception('Report not found');
-    }
-    dataStore.reports[index] = updated;
-    return updated;
+  Future<CircleReport> createReport({
+    required CircleReport draft,
+    required UserProfile currentUser,
+  }) async {
+    final payload = draft.copyWith(
+      teacherId: currentUser.isTeacher ? currentUser.id : draft.teacherId,
+      managerId: currentUser.isManager ? currentUser.id : draft.managerId,
+    );
+    final response = await _apiClient.post('/CircleReport/Create', body: payload.toApiPayload());
+    final newId = response['result']?.toString() ?? payload.id;
+    return payload.copyWith(id: newId, creationTime: DateTime.now());
+  }
+
+  Future<void> updateReport(CircleReport report) async {
+    await _apiClient.post('/CircleReport/Update', body: report.toApiPayload(includeId: true));
   }
 }

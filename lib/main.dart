@@ -6,20 +6,19 @@ import 'controllers/auth_controller.dart';
 import 'controllers/report_controller.dart';
 import 'screens/login_screen.dart';
 import 'screens/reports_screen.dart';
+import 'services/api_client.dart';
 import 'services/auth_service.dart';
-import 'services/mock_data_store.dart';
 import 'services/report_service.dart';
 
 void main() {
-  final dataStore = MockDataStore();
+  final apiClient = ApiClient();
   runApp(
     MultiProvider(
       providers: [
-        Provider<MockDataStore>.value(value: dataStore),
         ChangeNotifierProvider<AuthController>(
-          create: (_) => AuthController(AuthService(dataStore)),
+          create: (_) => AuthController(AuthService(apiClient)),
         ),
-        Provider<ReportService>(create: (_) => ReportService(dataStore)),
+        Provider<ReportService>(create: (_) => ReportService(apiClient)),
         ChangeNotifierProvider<ReportController>(
           create: (context) => ReportController(context.read<ReportService>()),
         ),

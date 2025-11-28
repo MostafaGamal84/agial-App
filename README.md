@@ -1,18 +1,13 @@
 # Ajyal Al-Quran – Mobile Reports (Flutter)
 
-This Flutter app demonstrates the Ajyal Al-Quran mobile experience for logging in with phone/email, confirming OTP, viewing role-filtered circle reports, and adding or editing reports with the same hierarchy logic used on the web app.
+This Flutter app mirrors the Ajyal Al-Quran web experience for logging in with phone/email, confirming OTP, viewing role-filtered circle reports, and adding or editing reports using the same backend endpoints.
 
-## Mock credentials
-Use one of the built-in accounts to explore the role-specific flows:
-
-| Role | Login value |
-| --- | --- |
-| Admin | `admin@example.com` |
-| Branch Leader | `branch@example.com` |
-| Supervisor | `manager@example.com` |
-| Teacher | `teacher@example.com` |
-
-Any password is accepted. The OTP for all accounts is `123456`.
+## Configuration
+- Set the API base URL at build time using the `API_BASE_URL` Dart define (defaults to `https://example.com/api`).
+  ```bash
+  flutter run --dart-define=API_BASE_URL=https://your-domain.com/api
+  ```
+- All authenticated requests automatically include the JWT returned by `/api/Account/VerifyCode`.
 
 ## Running locally
 1. Ensure Flutter (stable) is installed.
@@ -20,15 +15,15 @@ Any password is accepted. The OTP for all accounts is `123456`.
    ```bash
    flutter pub get
    ```
-3. Run the app:
+3. Run the app, providing your API base if needed:
    ```bash
-   flutter run
+   flutter run --dart-define=API_BASE_URL=https://your-domain.com/api
    ```
 
 ## Highlights
-- Login + OTP confirmation mirrors `/api/Account/Login` + `/api/Account/VerifyCode`.
-- Role-based dropdown chaining for supervisor → teacher → circle → student on add/edit forms.
-- Attendance logic drives conditional required fields for minutes and memorization sections.
-- Filterable reports list that respects the current user's scope.
+- Login + OTP confirmation wired to `/api/Account/Login` and `/api/Account/VerifyCode` responses.
+- Role-based dropdown chaining (Supervisor → Teacher → Circle → Student) uses `UsersForGroups`, `Circle/GetResultsByFilter`, and `Circle/Get` to mirror web filtering.
+- Attendance logic drives conditional required fields for minutes and memorization sections before calling `CircleReport/Create` or `CircleReport/Update`.
+- Reports list pulls from `CircleReport/GetResultsByFilter` while enforcing teacher scoping for logged-in teachers.
 
-The app uses in-memory seed data to mimic backend responses; hook up the service layer to real APIs when ready.
+**Note:** The app now targets real endpoints; provide valid backend credentials and OTP codes from your environment when testing.

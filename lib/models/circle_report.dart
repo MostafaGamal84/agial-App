@@ -1,19 +1,39 @@
 import 'package:flutter/foundation.dart';
 
-import 'student.dart';
-import 'user.dart';
-
 enum AttendStatus { attended, excusedAbsence, unexcusedAbsence }
 
 extension AttendStatusLabel on AttendStatus {
   String get label {
     switch (this) {
       case AttendStatus.attended:
-        return 'Attended';
+        return 'حضر';
       case AttendStatus.excusedAbsence:
-        return 'Excused absence';
+        return 'غاب بعذر';
       case AttendStatus.unexcusedAbsence:
-        return 'Unexcused absence';
+        return 'غاب بدون عذر';
+    }
+  }
+
+  int get apiValue {
+    switch (this) {
+      case AttendStatus.attended:
+        return 1;
+      case AttendStatus.excusedAbsence:
+        return 2;
+      case AttendStatus.unexcusedAbsence:
+        return 3;
+    }
+  }
+
+  static AttendStatus fromApi(dynamic value) {
+    switch (value) {
+      case 1:
+        return AttendStatus.attended;
+      case 2:
+        return AttendStatus.excusedAbsence;
+      case 3:
+      default:
+        return AttendStatus.unexcusedAbsence;
     }
   }
 }
@@ -114,6 +134,70 @@ class CircleReport {
       other: other ?? this.other,
     );
   }
+
+  factory CircleReport.fromApi(Map<String, dynamic> json) {
+    return CircleReport(
+      id: json['id']?.toString() ?? '',
+      creationTime: DateTime.tryParse(json['creationTime']?.toString() ?? '') ?? DateTime.now(),
+      teacherId: json['teacherId']?.toString() ?? '',
+      circleId: json['circleId']?.toString() ?? '',
+      studentId: json['studentId']?.toString() ?? '',
+      attendStatueId: AttendStatusHelper.fromApiValue(json['attendStatueId']) ?? AttendStatus.unexcusedAbsence,
+      managerId: json['managerId']?.toString(),
+      minutes: json['minutes'] is int ? json['minutes'] as int? : int.tryParse(json['minutes']?.toString() ?? ''),
+      newId: json['newId'] is int ? json['newId'] as int? : int.tryParse(json['newId']?.toString() ?? ''),
+      newFrom: json['newFrom']?.toString(),
+      newTo: json['newTo']?.toString(),
+      newRate: json['newRate']?.toString(),
+      recentPast: json['recentPast']?.toString(),
+      recentPastRate: json['recentPastRate']?.toString(),
+      distantPast: json['distantPast']?.toString(),
+      distantPastRate: json['distantPastRate']?.toString(),
+      farthestPast: json['farthestPast']?.toString(),
+      farthestPastRate: json['farthestPastRate']?.toString(),
+      theWordsQuranStranger: json['theWordsQuranStranger']?.toString(),
+      intonation: json['intonation']?.toString(),
+      other: json['other']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toApiPayload({bool includeId = false}) {
+    return {
+      if (includeId) 'id': id,
+      'teacherId': teacherId,
+      'circleId': circleId,
+      'studentId': studentId,
+      'attendStatueId': attendStatueId.apiValue,
+      'managerId': managerId,
+      'minutes': minutes,
+      'newId': newId,
+      'newFrom': newFrom,
+      'newTo': newTo,
+      'newRate': newRate,
+      'recentPast': recentPast,
+      'recentPastRate': recentPastRate,
+      'distantPast': distantPast,
+      'distantPastRate': distantPastRate,
+      'farthestPast': farthestPast,
+      'farthestPastRate': farthestPastRate,
+      'theWordsQuranStranger': theWordsQuranStranger,
+      'intonation': intonation,
+      'other': other,
+      'creationTime': creationTime.toIso8601String(),
+    };
+  }
+}
+
+class AttendStatusHelper {
+  static AttendStatus? fromApiValue(dynamic value) {
+    if (value == null) return null;
+    final intValue = value is int ? value : int.tryParse(value.toString());
+    return switch (intValue) {
+      1 => AttendStatus.attended,
+      2 => AttendStatus.excusedAbsence,
+      _ => AttendStatus.unexcusedAbsence,
+    };
+  }
 }
 
 class ReportFilter {
@@ -128,13 +212,13 @@ class ReportFilter {
 class ReportDisplayRow {
   const ReportDisplayRow({
     required this.report,
-    required this.teacher,
-    required this.student,
+    required this.teacherName,
+    required this.studentName,
     required this.circleName,
   });
 
   final CircleReport report;
-  final UserProfile teacher;
-  final Student student;
+  final String teacherName;
+  final String studentName;
   final String circleName;
 }

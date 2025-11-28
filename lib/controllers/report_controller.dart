@@ -18,7 +18,10 @@ class ReportController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     try {
-      reports = reportService.getReports(filter: filter, currentUser: currentUser);
+      reports = await reportService.fetchReports(
+        filter: filter,
+        currentUser: currentUser,
+      );
     } catch (e) {
       errorMessage = e.toString();
     }
@@ -26,8 +29,8 @@ class ReportController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateFilter(ReportFilter newFilter, UserProfile currentUser) {
+  Future<void> updateFilter(ReportFilter newFilter, UserProfile currentUser) async {
     filter = newFilter;
-    refresh(currentUser);
+    await refresh(currentUser);
   }
 }

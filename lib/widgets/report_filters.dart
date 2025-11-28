@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../models/circle.dart';
 import '../models/circle_report.dart';
+import '../models/student.dart';
 import '../models/user.dart';
 import '../services/report_service.dart';
 
@@ -27,96 +29,103 @@ class _ReportFiltersState extends State<ReportFilters> {
   String? _selectedTeacherId;
   String? _selectedCircleId;
   String? _selectedStudentId;
-  late List<DropdownMenuItem<String>> supervisorItems;
-  late List<DropdownMenuItem<String>> teacherItems;
-  late List<DropdownMenuItem<String>> circleItems;
-  late List<DropdownMenuItem<String>> studentItems;
+  bool _isLoading = true;
+  String? _error;
+  bool _hydratedFromInitial = false;
+
+  List<UserProfile> supervisors = [];
+  List<UserProfile> teachers = [];
+  List<Circle> circles = [];
+  List<Student> students = [];
 
   @override
   void initState() {
     super.initState();
-    supervisorItems = [];
-    teacherItems = [];
-    circleItems = [];
-    studentItems = [];
-    _configureFiltersFromUser();
+    _bootstrap();
   }
 
-  void _configureFiltersFromUser() {
-    final user = widget.currentUser;
-    if (user.isAdmin || user.isBranchLeader) {
-      final supervisors = widget.reportService
-          .getSupervisors(branchId: user.isBranchLeader ? user.branchId : null);
-      supervisorItems = supervisors
-          .map((sup) => DropdownMenuItem(value: sup.id, child: Text(sup.fullName)))
-          .toList();
-      if (widget.initialFilter.teacherId != null && supervisors.isNotEmpty) {
-        final matched = supervisors.firstWhere(
-          (sup) => widget.reportService
-              .getTeachers(managerId: sup.id)
-              .any((t) => t.id == widget.initialFilter.teacherId),
-          orElse: () => supervisors.first,
-        );
-        _selectedSupervisorId = matched.id;
-      } else {
-        _selectedSupervisorId = supervisors.isNotEmpty ? supervisors.first.id : null;
-      }
-      _loadTeachers();
-    } else if (user.isManager) {
-      _selectedSupervisorId = user.id;
-      _loadTeachers();
-    } else if (user.isTeacher) {
-      _selectedTeacherId = user.id;
-      _loadCircles();
+  Future<void> _bootstrap() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      await _configureFiltersFromUser();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
-  void _loadTeachers() {
+  Future<void> _configureFiltersFromUser() async {
     final user = widget.currentUser;
-    final teachers = widget.reportService.getTeachers(
+    if (user.isAdmin || user.isBranchLeader) {
+      supervisors = await widget.reportService
+          .fetchSupervisors(branchId: user.isBranchLeader ? user.branchId : null);
+      _selectedSupervisorId = supervisors.isNotEmpty ? supervisors.first.id : null;
+    } else if (user.isManager) {
+      _selectedSupervisorId = user.id;
+    } else if (user.isTeacher) {
+      _selectedTeacherId = user.id;
+    }
+    await _loadTeachers();
+  }
+
+  Future<void> _loadTeachers() async {
+    final user = widget.currentUser;
+    if (user.isTeacher) {
+      await _loadCircles();
+      return;
+    }
+
+    teachers = await widget.reportService.fetchTeachers(
       managerId: user.isAdmin || user.isBranchLeader ? _selectedSupervisorId : user.id,
       branchId: user.isBranchLeader ? user.branchId : null,
     );
-    teacherItems = teachers
-        .map((teacher) => DropdownMenuItem(
-              value: teacher.id,
-              child: Text(teacher.fullName),
-            ))
-        .toList();
+
     if (teachers.isNotEmpty) {
-      _selectedTeacherId = widget.initialFilter.teacherId ?? teachers.first.id;
+      _selectedTeacherId =
+          (!_hydratedFromInitial && widget.initialFilter.teacherId != null)
+              ? widget.initialFilter.teacherId
+              : _selectedTeacherId ?? teachers.first.id;
     }
-    _loadCircles();
+    await _loadCircles();
   }
 
-  void _loadCircles() {
-    final circles = widget.reportService.getCircles(
-      teacherId: widget.currentUser.isTeacher ? widget.currentUser.id : _selectedTeacherId,
-    );
-    circleItems = circles
-        .map((circle) => DropdownMenuItem(value: circle.id, child: Text(circle.name)))
-        .toList();
+  Future<void> _loadCircles() async {
+    if (_selectedTeacherId == null && !widget.currentUser.isTeacher) {
+      circles = [];
+      students = [];
+      _notify();
+      return;
+    }
+
+    final teacherId = widget.currentUser.isTeacher ? widget.currentUser.id : _selectedTeacherId!;
+    circles = await widget.reportService.fetchCircles(teacherId: teacherId);
     if (circles.isNotEmpty) {
-      _selectedCircleId = widget.initialFilter.circleId ?? circles.first.id;
+      _selectedCircleId = (!_hydratedFromInitial && widget.initialFilter.circleId != null)
+          ? widget.initialFilter.circleId
+          : _selectedCircleId ?? circles.first.id;
     }
-    _loadStudents();
+    await _loadStudents();
   }
 
-  void _loadStudents() {
-    studentItems = [];
-    if (_selectedCircleId != null) {
-      final circle = widget.reportService.getCircle(_selectedCircleId!);
-      studentItems = circle.students
-          .map(
-            (student) => DropdownMenuItem(
-              value: student.id,
-              child: Text(student.fullName),
-            ),
-          )
-          .toList();
-      if (circle.students.isNotEmpty) {
-        _selectedStudentId = widget.initialFilter.studentId ?? circle.students.first.id;
-      }
+  Future<void> _loadStudents() async {
+    if (_selectedCircleId == null) {
+      students = [];
+      _selectedStudentId = null;
+      _notify();
+      return;
+    }
+    final circle = await widget.reportService.fetchCircle(_selectedCircleId!);
+    students = circle.students;
+    if (students.isNotEmpty) {
+      _selectedStudentId = (!_hydratedFromInitial && widget.initialFilter.studentId != null)
+          ? widget.initialFilter.studentId
+          : _selectedStudentId ?? students.first.id;
     }
     _notify();
   }
@@ -129,12 +138,25 @@ class _ReportFiltersState extends State<ReportFilters> {
         studentId: _selectedStudentId,
       ),
     );
+    _hydratedFromInitial = true;
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final user = widget.currentUser;
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator.adaptive()),
+      );
+    }
+    if (_error != null) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(_error!, style: const TextStyle(color: Colors.red)),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -143,7 +165,9 @@ class _ReportFiltersState extends State<ReportFilters> {
             DropdownButtonFormField<String>(
               value: _selectedSupervisorId,
               decoration: const InputDecoration(labelText: 'المشرف', border: OutlineInputBorder()),
-              items: supervisorItems,
+              items: supervisors
+                  .map((sup) => DropdownMenuItem(value: sup.id, child: Text(sup.fullName)))
+                  .toList(),
               onChanged: (value) {
                 _selectedSupervisorId = value;
                 _loadTeachers();
@@ -155,7 +179,14 @@ class _ReportFiltersState extends State<ReportFilters> {
             DropdownButtonFormField<String>(
               value: _selectedTeacherId,
               decoration: const InputDecoration(labelText: 'المعلم', border: OutlineInputBorder()),
-              items: teacherItems,
+              items: teachers
+                  .map(
+                    (teacher) => DropdownMenuItem(
+                      value: teacher.id,
+                      child: Text(teacher.fullName),
+                    ),
+                  )
+                  .toList(),
               onChanged: (value) {
                 _selectedTeacherId = value;
                 _loadCircles();
@@ -165,7 +196,14 @@ class _ReportFiltersState extends State<ReportFilters> {
           DropdownButtonFormField<String>(
             value: _selectedCircleId,
             decoration: const InputDecoration(labelText: 'الحلقة', border: OutlineInputBorder()),
-            items: circleItems,
+            items: circles
+                .map(
+                  (circle) => DropdownMenuItem(
+                    value: circle.id,
+                    child: Text(circle.name),
+                  ),
+                )
+                .toList(),
             onChanged: (value) {
               _selectedCircleId = value;
               _loadStudents();
@@ -175,7 +213,14 @@ class _ReportFiltersState extends State<ReportFilters> {
           DropdownButtonFormField<String>(
             value: _selectedStudentId,
             decoration: const InputDecoration(labelText: 'الطالب', border: OutlineInputBorder()),
-            items: studentItems,
+            items: students
+                .map(
+                  (student) => DropdownMenuItem(
+                    value: student.id,
+                    child: Text(student.fullName),
+                  ),
+                )
+                .toList(),
             onChanged: (value) {
               _selectedStudentId = value;
               _notify();

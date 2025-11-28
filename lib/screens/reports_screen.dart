@@ -82,6 +82,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
               controller.updateFilter(newFilter, user);
             },
           ),
+          if (controller.errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Text(
+                controller.errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
           Expanded(
             child: controller.isLoading
                 ? const Center(child: CircularProgressIndicator.adaptive())
@@ -93,9 +101,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           final row = controller.reports[index];
                           return Card(
                             child: ListTile(
-                              title: Text(row.student.fullName),
+                              title: Text(row.studentName.isEmpty ? 'طالب غير معروف' : row.studentName),
                               subtitle: Text(
-                                '${row.circleName} • ${row.teacher.fullName}\n${row.report.attendStatueId.label}',
+                                '${row.circleName.isNotEmpty ? row.circleName : 'حلقة غير معروفة'} • ${row.teacherName.isEmpty ? 'معلم غير معروف' : row.teacherName}\n${row.report.attendStatueId.label}',
                               ),
                               trailing: IconButton(
                                 icon: const Icon(Icons.edit),

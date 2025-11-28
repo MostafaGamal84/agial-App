@@ -1,10 +1,10 @@
 import '../models/user.dart';
-import 'mock_data_store.dart';
+import 'api_client.dart';
 
 class AuthService {
-  AuthService(this.dataStore);
+  AuthService(this._apiClient);
 
-  final MockDataStore dataStore;
+  final ApiClient _apiClient;
   String? _pendingLogin;
   UserProfile? _currentUser;
   String? _token;
@@ -13,30 +13,47 @@ class AuthService {
   String? get token => _token;
 
   Future<void> login(String login, {String? password}) async {
-    if (!dataStore.loginDirectory.containsKey(login.trim().toLowerCase())) {
-      throw Exception('البيانات غير صحيحة، جرّب بريدًا مسجلًا مثل admin@example.com');
+    final payload = {
+      'userNameOrEmailAddress': login,
+      if (password != null) 'password': password,
+    };
+    final response = await _apiClient.post('/Account/Login', body: payload);
+    if (response['success'] == false) {
+      throw Exception(response['error'] ?? 'تعذر بدء تسجيل الدخول');
     }
-    _pendingLogin = login.trim().toLowerCase();
+    _pendingLogin = login;
   }
 
   Future<UserProfile> verifyOtp(String otp) async {
     if (_pendingLogin == null) {
       throw Exception('ابدأ بتسجيل الدخول أولًا');
     }
-    if (otp != '123456') {
-      throw Exception('رمز التحقق غير صحيح');
+    final response = await _apiClient.post(
+      '/Account/VerifyCode',
+      body: {
+        'userNameOrEmailAddress': _pendingLogin,
+        'code': otp,
+      },
+    );
+    if (response['success'] == false) {
+      throw Exception(response['error'] ?? 'رمز التحقق غير صحيح');
     }
-    final userId = dataStore.loginDirectory[_pendingLogin]!;
-    _currentUser =
-        dataStore.users.firstWhere((profile) => profile.id == userId);
-    _token = 'mock-token-for-$userId';
+    final result = response['result'] as Map<String, dynamic>?;
+    if (result == null || result['accessToken'] == null) {
+      throw Exception('تعذر التحقق من الرمز');
+    }
+    final profile = UserProfile.fromApi(result);
+    _currentUser = profile;
+    _token = result['accessToken'] as String?;
     _pendingLogin = null;
-    return _currentUser!;
+    _apiClient.updateToken(_token);
+    return profile;
   }
 
   void logout() {
     _currentUser = null;
     _token = null;
     _pendingLogin = null;
+    _apiClient.updateToken(null);
   }
 }
