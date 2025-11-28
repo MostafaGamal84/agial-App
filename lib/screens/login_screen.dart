@@ -38,38 +38,97 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: const [
-                      _HeaderBadge(
-                        backgroundColor: Color(0xFF1c2434),
-                        child: Text(
-                          'أجيال القرآن',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            height: 1.4,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF111827),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.35),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(18),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: const [
+                              Text(
+                                'أجيال القرآن',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                'للارتقاء بمعايير الجودة في التعليم القرآني',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              SizedBox(height: 14),
+                              Wrap(
+                                alignment: WrapAlignment.end,
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  _HeaderBadge(
+                                    backgroundColor: Color(0xFF1c2434),
+                                    child: Text(
+                                      'اللقاء الدوري لمشرفي ومشرفات البيانات',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                  _HeaderBadge(
+                                    backgroundColor: Color(0xFF1c2434),
+                                    child: Text(
+                                      'المجلس الفرعي بمنطقة مكة المكرمة\nإدارة حلقات شرق مكة',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      // _HeaderBadge(
-                      //   backgroundColor: Color(0xFF1c2434),
-                      //   child: Text(
-                      //     'تطبيق تقارير الحلقات',
-                      //     textAlign: TextAlign.center,
-                      //     style: TextStyle(
-                      //       color: Colors.white,
-                      //       fontSize: 11,
-                      //       height: 1.4,
-                      //     ),
-                      //   ),
-                      // ),
-                    ],
+                        const SizedBox(width: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.04),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white.withOpacity(0.08)),
+                          ),
+                          child: Image.asset(
+                            'assets/images/app_icon.png',
+                            width: 96,
+                            height: 96,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   Align(
                     alignment: Alignment.centerRight,
                     child: Column(
