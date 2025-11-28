@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
@@ -16,19 +17,50 @@ class OTPScreen extends StatefulWidget {
 
 class _OTPScreenState extends State<OTPScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _otpController = TextEditingController(text: '123456');
+  late final List<TextEditingController> _otpControllers;
+  late final List<FocusNode> _focusNodes;
+
+  @override
+  void initState() {
+    super.initState();
+    _otpControllers = List.generate(4, (_) => TextEditingController());
+    _focusNodes = List.generate(4, (_) => FocusNode());
+  }
 
   @override
   void dispose() {
-    _otpController.dispose();
+    for (final controller in _otpControllers) {
+      controller.dispose();
+    }
+    for (final node in _focusNodes) {
+      node.dispose();
+    }
     super.dispose();
+  }
+
+  String get _otpCode => _otpControllers.map((controller) => controller.text).join();
+
+  void _onOtpChanged(int index, String value, FormFieldState<String> field) {
+    if (value.length > 1) {
+      _otpControllers[index]
+        ..text = value.substring(value.length - 1)
+        ..selection = const TextSelection.collapsed(offset: 1);
+    }
+
+    if (value.isNotEmpty && index < _focusNodes.length - 1) {
+      _focusNodes[index + 1].requestFocus();
+    } else if (value.isEmpty && index > 0) {
+      _focusNodes[index - 1].requestFocus();
+    }
+
+    field.didChange(_otpCode);
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     return Scaffold(
-      appBar: AppBar(title: const Text('التحقق من الرمز')),
+      backgroundColor: const Color(0xFF2D3337),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -37,28 +69,138 @@ class _OTPScreenState extends State<OTPScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('أدخل الرمز المرسل إلى ${widget.loginValue}'),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _otpController,
-                  decoration: const InputDecoration(
-                    labelText: 'رمز التحقق',
-                    border: OutlineInputBorder(),
+                const SizedBox(height: 30),
+                const Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'ERTIQAA',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
                   ),
+                ),
+                const SizedBox(height: 40),
+                const Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'كود التحقق',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'تم إرسال الرمز إلى ${widget.loginValue}',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.75),
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                FormField<String>(
                   validator: (value) {
-                    if (value == null || value.length < 4) {
-                      return 'أدخل رمزًا صالحًا';
+                    if (_otpCode.length != 4) {
+                      return 'أدخل الرمز المكون من 4 أرقام';
                     }
                     return null;
                   },
+                  builder: (field) => Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          _otpControllers.length,
+                          (index) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: SizedBox(
+                              width: 60,
+                              child: TextField(
+                                controller: _otpControllers[index],
+                                focusNode: _focusNodes[index],
+                                autofocus: index == 0,
+                                textAlign: TextAlign.center,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide:
+                                        const BorderSide(color: Colors.white),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFF3B52C),
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                                inputFormatters: const [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(1),
+                                ],
+                                onChanged: (value) =>
+                                    _onOtpChanged(index, value, field),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (field.hasError)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Text(
+                            field.errorText!,
+                            style: const TextStyle(color: Colors.redAccent),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
+                const Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'لم تتسلم كود؟ إعادة إرساله',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const Spacer(),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF3B52C),
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   onPressed: auth.isLoading
                       ? null
                       : () async {
                           if (!_formKey.currentState!.validate()) return;
-                          final user = await auth.verify(_otpController.text);
+                          final user = await auth.verify(_otpCode);
                           if (!mounted) return;
                           if (auth.errorMessage != null) {
                             showToast(
@@ -83,8 +225,15 @@ class _OTPScreenState extends State<OTPScreen> {
                         },
                   child: auth.isLoading
                       ? const CircularProgressIndicator.adaptive()
-                      : const Text('تأكيد'),
+                      : const Text(
+                          'تحقق',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
+                const SizedBox(height: 12),
               ],
             ),
           ),
