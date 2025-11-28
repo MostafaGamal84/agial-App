@@ -14,7 +14,7 @@ class AuthService {
 
   Future<void> login(String login, {String? password}) async {
     final payload = {
-      'userNameOrEmailAddress': login,
+      'email': login,
       if (password != null) 'password': password,
     };
     final response = await _apiClient.post('/Account/Login', body: payload);
@@ -31,7 +31,7 @@ class AuthService {
     final response = await _apiClient.post(
       '/Account/VerifyCode',
       body: {
-        'userNameOrEmailAddress': _pendingLogin,
+        'email': _pendingLogin,
         'code': otp,
       },
     );

@@ -3,7 +3,7 @@
 This Flutter app mirrors the Ajyal Al-Quran web experience for logging in with phone/email, confirming OTP, viewing role-filtered circle reports, and adding or editing reports using the same backend endpoints.
 
 ## Configuration
-- Set the API base URL at build time using the `API_BASE_URL` Dart define (defaults to `https://example.com/api`).
+- Set the API base URL at build time using the `API_BASE_URL` Dart define (defaults to `https://ajyalbackend.somee.com/api`).
   ```bash
   flutter run --dart-define=API_BASE_URL=https://your-domain.com/api
   ```

@@ -9,7 +9,7 @@ class ApiClient {
     http.Client? httpClient,
     String? baseUrl,
   })  : _http = httpClient ?? http.Client(),
-        baseUrl = baseUrl ?? const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://example.com/api');
+        baseUrl = baseUrl ?? const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://ajyalbackend.somee.com/api');
 
   final http.Client _http;
   final String baseUrl;
