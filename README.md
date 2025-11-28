@@ -1,16 +1,34 @@
-# game
+# Ajyal Al-Quran – Mobile Reports (Flutter)
 
-A new Flutter project.
+This Flutter app demonstrates the Ajyal Al-Quran mobile experience for logging in with phone/email, confirming OTP, viewing role-filtered circle reports, and adding or editing reports with the same hierarchy logic used on the web app.
 
-## Getting Started
+## Mock credentials
+Use one of the built-in accounts to explore the role-specific flows:
 
-This project is a starting point for a Flutter application.
+| Role | Login value |
+| --- | --- |
+| Admin | `admin@example.com` |
+| Branch Leader | `branch@example.com` |
+| Supervisor | `manager@example.com` |
+| Teacher | `teacher@example.com` |
 
-A few resources to get you started if this is your first Flutter project:
+Any password is accepted. The OTP for all accounts is `123456`.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Running locally
+1. Ensure Flutter (stable) is installed.
+2. Get packages:
+   ```bash
+   flutter pub get
+   ```
+3. Run the app:
+   ```bash
+   flutter run
+   ```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Highlights
+- Login + OTP confirmation mirrors `/api/Account/Login` + `/api/Account/VerifyCode`.
+- Role-based dropdown chaining for supervisor → teacher → circle → student on add/edit forms.
+- Attendance logic drives conditional required fields for minutes and memorization sections.
+- Filterable reports list that respects the current user's scope.
+
+The app uses in-memory seed data to mimic backend responses; hook up the service layer to real APIs when ready.
