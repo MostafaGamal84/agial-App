@@ -70,19 +70,30 @@ class _OTPScreenState extends State<OTPScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 30),
-                const Align(
+                Align(
                   alignment: Alignment.center,
-                  child: Text(
-                    'ERTIQAA',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'assets/images/app_icon.png',
+                        height: 72,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'AJYAL AL-QURAN',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
                 const Align(
                   alignment: Alignment.center,
                   child: Text(
@@ -116,49 +127,53 @@ class _OTPScreenState extends State<OTPScreen> {
                   },
                   builder: (field) => Column(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          _otpControllers.length,
-                          (index) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: SizedBox(
-                              width: 60,
-                              child: TextField(
-                                controller: _otpControllers[index],
-                                focusNode: _focusNodes[index],
-                                autofocus: index == 0,
-                                textAlign: TextAlign.center,
-                                keyboardType: TextInputType.number,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
-                                ),
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide:
-                                        const BorderSide(color: Colors.white),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            _otpControllers.length,
+                            (index) => Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: SizedBox(
+                                width: 60,
+                                child: TextField(
+                                  controller: _otpControllers[index],
+                                  focusNode: _focusNodes[index],
+                                  autofocus: index == 0,
+                                  textAlign: TextAlign.center,
+                                  textDirection: TextDirection.ltr,
+                                  keyboardType: TextInputType.number,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
                                   ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFF3B52C),
-                                      width: 2,
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding:
+                                        const EdgeInsets.symmetric(vertical: 14),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          const BorderSide(color: Colors.white),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFFF3B52C),
+                                        width: 2,
+                                      ),
                                     ),
                                   ),
+                                  inputFormatters: const [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(1),
+                                  ],
+                                  onChanged: (value) =>
+                                      _onOtpChanged(index, value, field),
                                 ),
-                                inputFormatters: const [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(1),
-                                ],
-                                onChanged: (value) =>
-                                    _onOtpChanged(index, value, field),
                               ),
                             ),
                           ),
