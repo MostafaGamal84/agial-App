@@ -54,6 +54,37 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
   bool get isEditing => widget.existingReport != null;
 
+  String? get _selectedSupervisorName {
+    if (_selectedSupervisorId == null) return null;
+    for (final supervisor in supervisors) {
+      if (supervisor.id == _selectedSupervisorId) {
+        return supervisor.fullName;
+      }
+    }
+    return _selectedSupervisorId;
+  }
+
+  String? get _selectedTeacherName {
+    if (_selectedTeacherId == null) return null;
+    if (widget.currentUser.isTeacher && _selectedTeacherId == widget.currentUser.id) {
+      return widget.currentUser.fullName;
+    }
+    for (final teacher in teachers) {
+      if (teacher.id == _selectedTeacherId) return teacher.fullName;
+    }
+    return _selectedTeacherId;
+  }
+
+  String? get _selectedCircleName {
+    if (_selectedCircle != null) return _selectedCircle!.name;
+    return widget.existingReport?.circleId;
+  }
+
+  String? get _selectedStudentName {
+    if (_selectedStudent != null) return _selectedStudent!.fullName;
+    return widget.existingReport?.studentId;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -138,8 +169,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _selectedTeacherId = currentUser.id;
     } else {
       teachers = await reportService.fetchTeachers(
-        managerId: currentUser.isAdmin || currentUser.isBranchLeader ? _selectedSupervisorId : currentUser.id,
-        branchId: currentUser.isBranchLeader ? currentUser.branchId : null,
+        managerId:
+            currentUser.isAdmin || currentUser.isBranchLeader ? _selectedSupervisorId : currentUser.id,
+        branchId:
+            currentUser.isBranchLeader || currentUser.isManager ? currentUser.branchId : null,
       );
       if (teachers.isNotEmpty) {
         _selectedTeacherId = !_hydratedFromExisting && existing?.teacherId != null
@@ -212,124 +245,131 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (widget.currentUser.isAdmin || widget.currentUser.isBranchLeader)
-                            DropdownButtonFormField<String>(
-                              value: _selectedSupervisorId,
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: 'المشرف',
-                                border: OutlineInputBorder(),
-                              ),
-                              hint: const Text('اختر المشرف'),
-                              items: supervisors
-                                  .map(
-                                    (sup) => DropdownMenuItem(
-                                      value: sup.id,
-                                      child: Text(sup.fullName),
+                          if (widget.currentUser.isAdmin || widget.currentUser.isBranchLeader) ...[
+                            isEditing
+                                ? _buildReadOnlyField('المشرف', _selectedSupervisorName)
+                                : DropdownButtonFormField<String>(
+                                    value: _selectedSupervisorId,
+                                    isExpanded: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'المشرف',
+                                      border: OutlineInputBorder(),
                                     ),
-                                  )
-                                  .toList(),
-                              onTap: () {
-                                if (supervisors.isEmpty) {
-                                  _loadDropdowns(existing: widget.existingReport);
-                                }
-                              },
-                              onChanged: (value) {
-                                _selectedSupervisorId = value;
-                                _selectedTeacherId = null;
-                                _selectedCircle = null;
-                                _selectedStudent = null;
-                                _loadDropdowns(existing: widget.existingReport);
-                              },
-                            ),
-                          if (widget.currentUser.isAdmin ||
-                              widget.currentUser.isBranchLeader ||
-                              widget.currentUser.isManager)
+                                    hint: const Text('اختر المشرف'),
+                                    items: supervisors
+                                        .map(
+                                          (sup) => DropdownMenuItem(
+                                            value: sup.id,
+                                            child: Text(sup.fullName),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onTap: () {
+                                      if (supervisors.isEmpty) {
+                                        _loadDropdowns(existing: widget.existingReport);
+                                      }
+                                    },
+                                    onChanged: (value) {
+                                      _selectedSupervisorId = value;
+                                      _selectedTeacherId = null;
+                                      _selectedCircle = null;
+                                      _selectedStudent = null;
+                                      _loadDropdowns(existing: widget.existingReport);
+                                    },
+                                  ),
                             const SizedBox(height: 12),
-                          if (!widget.currentUser.isTeacher)
-                            DropdownButtonFormField<String>(
-                              value: _selectedTeacherId,
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: 'المعلم',
-                                border: OutlineInputBorder(),
-                              ),
-                              hint: const Text('اختر المعلم'),
-                              items: teachers
-                                  .map(
-                                    (teacher) => DropdownMenuItem(
-                                      value: teacher.id,
-                                      child: Text(teacher.fullName),
+                          ],
+                          if (!widget.currentUser.isTeacher) ...[
+                            isEditing
+                                ? _buildReadOnlyField('المعلم', _selectedTeacherName)
+                                : DropdownButtonFormField<String>(
+                                    value: _selectedTeacherId,
+                                    isExpanded: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'المعلم',
+                                      border: OutlineInputBorder(),
                                     ),
-                                  )
-                                  .toList(),
-                              onTap: () {
-                                if (teachers.isEmpty) {
-                                  _loadDropdowns(existing: widget.existingReport);
-                                }
-                              },
-                              onChanged: (value) async {
-                                _selectedTeacherId = value;
-                                _selectedCircle = null;
-                                _selectedStudent = null;
-                                await _loadDropdowns(existing: widget.existingReport);
-                              },
-                            ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            value: _selectedCircle?.id,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: 'الحلقة',
-                              border: OutlineInputBorder(),
-                            ),
-                            hint: const Text('اختر الحلقة'),
-                            items: circles
-                                .map(
-                                  (circle) => DropdownMenuItem(
-                                    value: circle.id,
-                                    child: Text(circle.name),
+                                    hint: const Text('اختر المعلم'),
+                                    items: teachers
+                                        .map(
+                                          (teacher) => DropdownMenuItem(
+                                            value: teacher.id,
+                                            child: Text(teacher.fullName),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onTap: () {
+                                      if (teachers.isEmpty) {
+                                        _loadDropdowns(existing: widget.existingReport);
+                                      }
+                                    },
+                                    onChanged: (value) async {
+                                      _selectedTeacherId = value;
+                                      _selectedCircle = null;
+                                      _selectedStudent = null;
+                                      await _loadDropdowns(existing: widget.existingReport);
+                                    },
                                   ),
-                                )
-                                .toList(),
-                            onTap: () {
-                              if (circles.isEmpty) {
-                                _loadDropdowns(existing: widget.existingReport);
-                              }
-                            },
-                            onChanged: (value) async {
-                              _selectedCircle = circles.firstWhere((c) => c.id == value);
-                              await _loadStudents();
-                              setState(() {});
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            value: _selectedStudent?.id,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: 'الطالب',
-                              border: OutlineInputBorder(),
-                            ),
-                            hint: const Text('اختر الطالب'),
-                            items: students
-                                .map(
-                                  (student) => DropdownMenuItem(
-                                    value: student.id,
-                                    child: Text(student.fullName),
+                            const SizedBox(height: 12),
+                          ],
+                          isEditing
+                              ? _buildReadOnlyField('الحلقة', _selectedCircleName)
+                              : DropdownButtonFormField<String>(
+                                  value: _selectedCircle?.id,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'الحلقة',
+                                    border: OutlineInputBorder(),
                                   ),
-                                )
-                                .toList(),
-                            onTap: () async {
-                              if (students.isEmpty && _selectedCircle != null) {
-                                await _loadStudents();
-                              }
-                            },
-                            onChanged: (value) {
-                              _selectedStudent = students.firstWhere((s) => s.id == value);
-                              setState(() {});
-                            },
-                          ),
+                                  hint: const Text('اختر الحلقة'),
+                                  items: circles
+                                      .map(
+                                        (circle) => DropdownMenuItem(
+                                          value: circle.id,
+                                          child: Text(circle.name),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onTap: () {
+                                    if (circles.isEmpty) {
+                                      _loadDropdowns(existing: widget.existingReport);
+                                    }
+                                  },
+                                  onChanged: (value) async {
+                                    _selectedCircle = circles.firstWhere((c) => c.id == value);
+                                    await _loadStudents();
+                                    setState(() {});
+                                  },
+                                ),
+                          const SizedBox(height: 12),
+                          isEditing
+                              ? _buildReadOnlyField('الطالب', _selectedStudentName)
+                              : DropdownButtonFormField<String>(
+                                  value: _selectedStudent?.id,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'الطالب',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  hint: const Text('اختر الطالب'),
+                                  items: students
+                                      .map(
+                                        (student) => DropdownMenuItem(
+                                          value: student.id,
+                                          child: Text(student.fullName),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onTap: () async {
+                                    if (students.isEmpty && _selectedCircle != null) {
+                                      await _loadStudents();
+                                    }
+                                  },
+                                  onChanged: (value) {
+                                    _selectedStudent = students.firstWhere((s) => s.id == value);
+                                    setState(() {});
+                                  },
+                                ),
                           const SizedBox(height: 16),
                           DropdownButtonFormField<AttendStatus>(
                             value: _status,
@@ -445,6 +485,18 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                       ),
                     ),
                   ),
+        ),
+      );
+    }
+
+  Widget _buildReadOnlyField(String label, String? value) {
+    final displayValue = (value ?? '').trim().isEmpty ? 'غير محدد' : value!;
+    return TextFormField(
+      enabled: false,
+      initialValue: displayValue,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
       ),
     );
   }
