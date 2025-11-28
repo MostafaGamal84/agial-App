@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
-import 'screens/start_screen.dart';
+import 'controllers/auth_controller.dart';
+import 'controllers/report_controller.dart';
+import 'screens/login_screen.dart';
+import 'screens/reports_screen.dart';
+import 'services/auth_service.dart';
+import 'services/mock_data_store.dart';
+import 'services/report_service.dart';
 
 void main() {
-  runApp(const MyApp());
+  final dataStore = MockDataStore();
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<MockDataStore>.value(value: dataStore),
+        ChangeNotifierProvider<AuthController>(
+          create: (_) => AuthController(AuthService(dataStore)),
+        ),
+        Provider<ReportService>(create: (_) => ReportService(dataStore)),
+        ChangeNotifierProvider<ReportController>(
+          create: (context) => ReportController(context.read<ReportService>()),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -12,28 +34,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthController>();
     return MaterialApp(
-      title: 'Game',
+      title: 'Ajyal Al-Quran Reports',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00695C)),
         useMaterial3: true,
         textTheme: GoogleFonts.tajawalTextTheme(),
         fontFamily: GoogleFonts.tajawal().fontFamily,
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            textStyle: GoogleFonts.tajawal(
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-            ),
-          ),
+        inputDecorationTheme: const InputDecorationTheme(
+          filled: true,
+          border: OutlineInputBorder(),
         ),
       ),
-      home: const StartScreen(),
+      builder: (context, child) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+      home: auth.currentUser == null ? const LoginScreen() : const ReportsScreen(),
     );
   }
 }
