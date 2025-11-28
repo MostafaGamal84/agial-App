@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _HeaderBadge(
                         backgroundColor: Color(0xFF1c2434),
                         child: Text(
-                          'اللقاء الدوري لمشرفي ومشرفات البيانات',
+                          'أجيال القرآن',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
@@ -55,18 +55,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      _HeaderBadge(
-                        backgroundColor: Color(0xFF1c2434),
-                        child: Text(
-                          'المجلس الفرعي بمنطقة مكة المكرمة\nإدارة حلقات شرق مكة',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
+                      // _HeaderBadge(
+                      //   backgroundColor: Color(0xFF1c2434),
+                      //   child: Text(
+                      //     'تطبيق تقارير الحلقات',
+                      //     textAlign: TextAlign.center,
+                      //     style: TextStyle(
+                      //       color: Colors.white,
+                      //       fontSize: 11,
+                      //       height: 1.4,
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                   const SizedBox(height: 32),
