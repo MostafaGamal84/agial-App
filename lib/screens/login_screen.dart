@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
 import 'otp_screen.dart';
+import '../widgets/toast.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -79,8 +80,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               _loginController.text,
                               password: _passwordController.text,
                             );
+                            if (!mounted) return;
+                            if (auth.errorMessage != null) {
+                              showToast(
+                                context,
+                                auth.errorMessage!,
+                                isError: true,
+                              );
+                              return;
+                            }
                             if (auth.codeSent) {
-                              if (!mounted) return;
+                              showToast(
+                                context,
+                                'تم إرسال رمز التحقق بنجاح',
+                              );
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) => OTPScreen(
@@ -94,13 +107,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? const CircularProgressIndicator.adaptive()
                         : const Text('إرسال رمز التحقق'),
                   ),
-                  if (auth.errorMessage != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      auth.errorMessage!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
-                    ),
-                  ],
                 ],
               ),
             ),
