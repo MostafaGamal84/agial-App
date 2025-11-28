@@ -73,7 +73,7 @@ class _OTPScreenState extends State<OTPScreen> {
                 const Align(
                   alignment: Alignment.center,
                   child: Text(
-                    'ERTIQAA',
+                    'AJYAL AL-QURAN',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 32,
@@ -153,7 +153,7 @@ class _OTPScreenState extends State<OTPScreen> {
                                     ),
                                   ),
                                 ),
-                                inputFormatters: const [
+                                inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
                                   LengthLimitingTextInputFormatter(1),
                                 ],
