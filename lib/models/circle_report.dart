@@ -207,6 +207,24 @@ class ReportFilter {
   final String? circleId;
   final String? studentId;
   final String? searchTerm;
+
+  factory ReportFilter.fromJson(Map<String, dynamic> json) {
+    return ReportFilter(
+      teacherId: json['teacherId'] as String?,
+      circleId: json['circleId'] as String?,
+      studentId: json['studentId'] as String?,
+      searchTerm: json['searchTerm'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'teacherId': teacherId,
+      'circleId': circleId,
+      'studentId': studentId,
+      'searchTerm': searchTerm,
+    };
+  }
 }
 
 class ReportDisplayRow {
