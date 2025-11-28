@@ -219,26 +219,33 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                           if (widget.currentUser.isAdmin || widget.currentUser.isBranchLeader)
                             DropdownButtonFormField<String>(
                               value: _selectedSupervisorId,
+                              isExpanded: true,
                               decoration: const InputDecoration(
                                 labelText: 'المشرف',
                                 border: OutlineInputBorder(),
                               ),
+                              hint: const Text('اختر المشرف'),
                               items: supervisors
                                   .map(
                                     (sup) => DropdownMenuItem(
                                       value: sup.id,
                                       child: Text(sup.fullName),
                                     ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            _selectedSupervisorId = value;
-                            _selectedTeacherId = null;
-                            _selectedCircle = null;
-                            _selectedStudent = null;
-                            _loadDropdowns(existing: widget.existingReport);
-                          },
-                        ),
+                                  )
+                                  .toList(),
+                              onTap: () {
+                                if (supervisors.isEmpty) {
+                                  _loadDropdowns(existing: widget.existingReport);
+                                }
+                              },
+                              onChanged: (value) {
+                                _selectedSupervisorId = value;
+                                _selectedTeacherId = null;
+                                _selectedCircle = null;
+                                _selectedStudent = null;
+                                _loadDropdowns(existing: widget.existingReport);
+                              },
+                            ),
                           if (widget.currentUser.isAdmin ||
                               widget.currentUser.isBranchLeader ||
                               widget.currentUser.isManager)
@@ -246,32 +253,41 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                           if (!widget.currentUser.isTeacher)
                             DropdownButtonFormField<String>(
                               value: _selectedTeacherId,
+                              isExpanded: true,
                               decoration: const InputDecoration(
                                 labelText: 'المعلم',
                                 border: OutlineInputBorder(),
                               ),
+                              hint: const Text('اختر المعلم'),
                               items: teachers
                                   .map(
                                     (teacher) => DropdownMenuItem(
                                       value: teacher.id,
                                       child: Text(teacher.fullName),
                                     ),
-                              )
-                              .toList(),
-                          onChanged: (value) async {
-                            _selectedTeacherId = value;
-                            _selectedCircle = null;
-                            _selectedStudent = null;
-                            await _loadDropdowns(existing: widget.existingReport);
-                          },
-                        ),
+                                  )
+                                  .toList(),
+                              onTap: () {
+                                if (teachers.isEmpty) {
+                                  _loadDropdowns(existing: widget.existingReport);
+                                }
+                              },
+                              onChanged: (value) async {
+                                _selectedTeacherId = value;
+                                _selectedCircle = null;
+                                _selectedStudent = null;
+                                await _loadDropdowns(existing: widget.existingReport);
+                              },
+                            ),
                           const SizedBox(height: 12),
                           DropdownButtonFormField<String>(
                             value: _selectedCircle?.id,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'الحلقة',
                               border: OutlineInputBorder(),
                             ),
+                            hint: const Text('اختر الحلقة'),
                             items: circles
                                 .map(
                                   (circle) => DropdownMenuItem(
@@ -280,6 +296,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                                   ),
                                 )
                                 .toList(),
+                            onTap: () {
+                              if (circles.isEmpty) {
+                                _loadDropdowns(existing: widget.existingReport);
+                              }
+                            },
                             onChanged: (value) async {
                               _selectedCircle = circles.firstWhere((c) => c.id == value);
                               await _loadStudents();
@@ -289,10 +310,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                           const SizedBox(height: 12),
                           DropdownButtonFormField<String>(
                             value: _selectedStudent?.id,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'الطالب',
                               border: OutlineInputBorder(),
                             ),
+                            hint: const Text('اختر الطالب'),
                             items: students
                                 .map(
                                   (student) => DropdownMenuItem(
@@ -301,6 +324,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                                   ),
                                 )
                                 .toList(),
+                            onTap: () async {
+                              if (students.isEmpty && _selectedCircle != null) {
+                                await _loadStudents();
+                              }
+                            },
                             onChanged: (value) {
                               _selectedStudent = students.firstWhere((s) => s.id == value);
                               setState(() {});
@@ -401,13 +429,13 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                             const SizedBox(height: 12),
                             _buildText('تقدير الماضي البعيد', _farthestPastRateController),
                             const SizedBox(height: 12),
-                          _buildText('ملاحظات أخرى', _otherController, maxLines: 3),
-                        ],
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _isSaving ? null : () => _submit(reportService),
+                            _buildText('ملاحظات أخرى', _otherController, maxLines: 3),
+                          ],
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isSaving ? null : () => _submit(reportService),
                               child: _isSaving
                                   ? const SizedBox(
                                       height: 20,
