@@ -62,8 +62,11 @@ class ReportService {
     }
 
     final response = await _apiClient.get('/CircleReport/GetResultsByFilter', query: query);
-    final result = response['result'] ?? response;
-    final items = (result['items'] ?? []) as List<dynamic>;
+    final result = response['result'] ?? response['data'] ?? response;
+    final itemsDynamic = result is Map<String, dynamic>
+        ? result['items'] ?? result['data'] ?? result['result'] ?? []
+        : [];
+    final items = itemsDynamic is List<dynamic> ? itemsDynamic : <dynamic>[];
 
     return items.map((item) {
       final reportMap = item as Map<String, dynamic>;
