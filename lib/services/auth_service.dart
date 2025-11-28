@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 import '../models/user.dart';
 import 'api_client.dart';
 
@@ -5,12 +9,26 @@ class AuthService {
   AuthService(this._apiClient);
 
   final ApiClient _apiClient;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  static const _tokenKey = 'auth_token';
+  static const _userKey = 'auth_user';
   String? _pendingLogin;
   UserProfile? _currentUser;
   String? _token;
 
   UserProfile? get currentUser => _currentUser;
   String? get token => _token;
+
+  Future<void> restoreSession() async {
+    final storedToken = await _secureStorage.read(key: _tokenKey);
+    final storedUser = await _secureStorage.read(key: _userKey);
+    if (storedToken == null || storedUser == null) return;
+
+    final userMap = jsonDecode(storedUser) as Map<String, dynamic>;
+    _token = storedToken;
+    _currentUser = UserProfile.fromApi(userMap);
+    _apiClient.updateToken(_token);
+  }
 
   Future<void> login(String login, {String? password}) async {
     final payload = {
@@ -47,13 +65,22 @@ class AuthService {
     _token = result['accessToken'] as String?;
     _pendingLogin = null;
     _apiClient.updateToken(_token);
+    await _persistSession();
     return profile;
   }
 
-  void logout() {
+  Future<void> logout() async {
     _currentUser = null;
     _token = null;
     _pendingLogin = null;
     _apiClient.updateToken(null);
+    await _secureStorage.delete(key: _tokenKey);
+    await _secureStorage.delete(key: _userKey);
+  }
+
+  Future<void> _persistSession() async {
+    if (_token == null || _currentUser == null) return;
+    await _secureStorage.write(key: _tokenKey, value: _token);
+    await _secureStorage.write(key: _userKey, value: jsonEncode(_currentUser!.toJson()));
   }
 }

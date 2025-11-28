@@ -4,14 +4,23 @@ import '../models/user.dart';
 import '../services/auth_service.dart';
 
 class AuthController extends ChangeNotifier {
-  AuthController(this._authService);
+  AuthController(this._authService) {
+    _restoreSession();
+  }
 
   final AuthService _authService;
   bool isLoading = false;
+  bool isRestoring = true;
   String? errorMessage;
   bool codeSent = false;
 
   UserProfile? get currentUser => _authService.currentUser;
+
+  Future<void> _restoreSession() async {
+    await _authService.restoreSession();
+    isRestoring = false;
+    notifyListeners();
+  }
 
   Future<void> login(String login, {String? password}) async {
     isLoading = true;
@@ -44,8 +53,8 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  void logout() {
-    _authService.logout();
+  Future<void> logout() async {
+    await _authService.logout();
     notifyListeners();
   }
 }
