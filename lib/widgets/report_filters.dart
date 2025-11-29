@@ -260,7 +260,7 @@ class _ReportFiltersState extends State<ReportFilters> {
                 items: students
                     .map(
                       (student) => DropdownMenuItem(
-                        value: student.id,
+                        value: student.id.toString(),
                         child: Text(student.fullName),
                       ),
                     )
