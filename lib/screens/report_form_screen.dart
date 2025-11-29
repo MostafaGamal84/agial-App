@@ -420,23 +420,27 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ? _selectedSupervisorId
             : null;
 
-    return DropdownButtonFormField<String>(
-      key: ValueKey('supervisor-${user.id}-${supervisors.length}'),
-      value: value,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'المشرف',
-        border: OutlineInputBorder(),
+    return AbsorbPointer(
+      absorbing: isEditing,
+      child: DropdownButtonFormField<String>(
+        key: ValueKey('supervisor-${user.id}-${supervisors.length}'),
+        value: value,
+        isExpanded: true,
+        decoration: const InputDecoration(
+          labelText: 'المشرف',
+          border: OutlineInputBorder(),
+        ),
+        items: supervisors
+            .map(
+              (s) => DropdownMenuItem<String>(
+                value: s.id,
+                child: Text(s.fullName),
+              ),
+            )
+            .toList(),
+        onChanged:
+            isEditing || supervisors.isEmpty ? null : (v) => _onSupervisorChanged(v),
       ),
-      items: supervisors
-          .map(
-            (s) => DropdownMenuItem<String>(
-              value: s.id,
-              child: Text(s.fullName),
-            ),
-          )
-          .toList(),
-      onChanged: supervisors.isEmpty ? null : (v) => _onSupervisorChanged(v),
     );
   }
 
@@ -453,23 +457,27 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ? _selectedTeacherId
             : null;
 
-    return DropdownButtonFormField<String>(
-      key: ValueKey('teacher-${_selectedSupervisorId ?? 'none'}-${teachers.length}'),
-      value: value,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'المعلم',
-        border: OutlineInputBorder(),
+    return AbsorbPointer(
+      absorbing: isEditing,
+      child: DropdownButtonFormField<String>(
+        key: ValueKey('teacher-${_selectedSupervisorId ?? 'none'}-${teachers.length}'),
+        value: value,
+        isExpanded: true,
+        decoration: const InputDecoration(
+          labelText: 'المعلم',
+          border: OutlineInputBorder(),
+        ),
+        items: teachers
+            .map(
+              (t) => DropdownMenuItem<String>(
+                value: t.id,
+                child: Text(t.fullName),
+              ),
+            )
+            .toList(),
+        onChanged:
+            isEditing || teachers.isEmpty ? null : (v) => _onTeacherChanged(v),
       ),
-      items: teachers
-          .map(
-            (t) => DropdownMenuItem<String>(
-              value: t.id,
-              child: Text(t.fullName),
-            ),
-          )
-          .toList(),
-      onChanged: teachers.isEmpty ? null : (v) => _onTeacherChanged(v),
     );
   }
 
@@ -480,23 +488,27 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ? _selectedCircle!.id
             : null;
 
-    return DropdownButtonFormField<String>(
-      key: ValueKey('circle-${_selectedTeacherId ?? 'none'}-${circles.length}'),
-      value: value,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'الحلقة',
-        border: OutlineInputBorder(),
+    return AbsorbPointer(
+      absorbing: isEditing,
+      child: DropdownButtonFormField<String>(
+        key: ValueKey('circle-${_selectedTeacherId ?? 'none'}-${circles.length}'),
+        value: value,
+        isExpanded: true,
+        decoration: const InputDecoration(
+          labelText: 'الحلقة',
+          border: OutlineInputBorder(),
+        ),
+        items: circles
+            .map(
+              (c) => DropdownMenuItem<String>(
+                value: c.id,
+                child: Text(c.name),
+              ),
+            )
+            .toList(),
+        onChanged:
+            isEditing || circles.isEmpty ? null : (v) => _onCircleChanged(v),
       ),
-      items: circles
-          .map(
-            (c) => DropdownMenuItem<String>(
-              value: c.id,
-              child: Text(c.name),
-            ),
-          )
-          .toList(),
-      onChanged: circles.isEmpty ? null : (v) => _onCircleChanged(v),
     );
   }
 
@@ -520,33 +532,36 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _selectedStudent = null;
     }
 
-    return DropdownButtonFormField<int>(
-      key: ValueKey(
-          'student-${_selectedCircle?.id ?? 'none'}-${uniqueStudents.length}'),
-      value: value,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'الطالب',
-        border: OutlineInputBorder(),
+    return AbsorbPointer(
+      absorbing: isEditing,
+      child: DropdownButtonFormField<int>(
+        key: ValueKey(
+            'student-${_selectedCircle?.id ?? 'none'}-${uniqueStudents.length}'),
+        value: value,
+        isExpanded: true,
+        decoration: const InputDecoration(
+          labelText: 'الطالب',
+          border: OutlineInputBorder(),
+        ),
+        items: uniqueStudents
+            .map(
+              (s) => DropdownMenuItem<int>(
+                value: s.id,
+                child: Text(s.fullName),
+              ),
+            )
+            .toList(),
+        onChanged: isEditing || uniqueStudents.isEmpty
+            ? null
+            : (v) {
+                if (v == null) return;
+                _selectedStudent = uniqueStudents.firstWhere(
+                  (s) => s.id == v,
+                  orElse: () => uniqueStudents.first,
+                );
+                setState(() {});
+              },
       ),
-      items: uniqueStudents
-          .map(
-            (s) => DropdownMenuItem<int>(
-              value: s.id,
-              child: Text(s.fullName),
-            ),
-          )
-          .toList(),
-      onChanged: uniqueStudents.isEmpty
-          ? null
-          : (v) {
-              if (v == null) return;
-              _selectedStudent = uniqueStudents.firstWhere(
-                (s) => s.id == v,
-                orElse: () => uniqueStudents.first,
-              );
-              setState(() {});
-            },
     );
   }
 
