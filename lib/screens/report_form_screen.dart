@@ -5,6 +5,7 @@ import '../models/circle.dart';
 import '../models/circle_report.dart';
 import '../models/student.dart';
 import '../models/user.dart';
+import '../models/quran_surah.dart';
 import '../services/report_service.dart';
 import '../widgets/toast.dart';
 
@@ -24,7 +25,10 @@ class ReportFormScreen extends StatefulWidget {
 
 class _ReportFormScreenState extends State<ReportFormScreen> {
   final _formKey = GlobalKey<FormState>();
+
   late AttendStatus _status;
+
+  // Controllers
   late TextEditingController _minutesController;
   late TextEditingController _newFromController;
   late TextEditingController _newToController;
@@ -36,12 +40,15 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   late TextEditingController _farthestPastController;
   late TextEditingController _farthestPastRateController;
   late TextEditingController _otherController;
-  int? _selectedSurah;
+
+  // Selections
+  int? _selectedSurahNumber;
   String? _selectedSupervisorId;
   String? _selectedTeacherId;
   Circle? _selectedCircle;
   Student? _selectedStudent;
 
+  // Lists
   List<UserProfile> supervisors = [];
   List<UserProfile> teachers = [];
   List<Circle> circles = [];
@@ -50,45 +57,15 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   String? _error;
-  bool _hydratedFromExisting = false;
 
   bool get isEditing => widget.existingReport != null;
-
-  String? get _selectedSupervisorName {
-    if (_selectedSupervisorId == null) return null;
-    for (final supervisor in supervisors) {
-      if (supervisor.id == _selectedSupervisorId) {
-        return supervisor.fullName;
-      }
-    }
-    return _selectedSupervisorId;
-  }
-
-  String? get _selectedTeacherName {
-    if (_selectedTeacherId == null) return null;
-    if (widget.currentUser.isTeacher && _selectedTeacherId == widget.currentUser.id) {
-      return widget.currentUser.fullName;
-    }
-    for (final teacher in teachers) {
-      if (teacher.id == _selectedTeacherId) return teacher.fullName;
-    }
-    return _selectedTeacherId;
-  }
-
-  String? get _selectedCircleName {
-    if (_selectedCircle != null) return _selectedCircle!.name;
-    return widget.existingReport?.circleId;
-  }
-
-  String? get _selectedStudentName {
-    if (_selectedStudent != null) return _selectedStudent!.fullName;
-    return widget.existingReport?.studentId;
-  }
 
   @override
   void initState() {
     super.initState();
-    _status = AttendStatus.attended;
+
+    _status = widget.existingReport?.attendStatueId ?? AttendStatus.attended;
+
     _minutesController = TextEditingController();
     _newFromController = TextEditingController();
     _newToController = TextEditingController();
@@ -100,6 +77,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _farthestPastController = TextEditingController();
     _farthestPastRateController = TextEditingController();
     _otherController = TextEditingController();
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
   }
 
@@ -119,389 +97,532 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     super.dispose();
   }
 
+  // =====================================================
+  // INITIALIZE
+  // =====================================================
   Future<void> _initialize() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
+
     try {
-      final CircleReport? existing = widget.existingReport;
-      _status = existing?.attendStatueId ?? AttendStatus.attended;
-      _minutesController.text = existing?.minutes?.toString() ?? '';
-      _newFromController.text = existing?.newFrom ?? '';
-      _newToController.text = existing?.newTo ?? '';
-      _newRateController.text = existing?.newRate ?? '';
-      _recentPastController.text = existing?.recentPast ?? '';
-      _recentPastRateController.text = existing?.recentPastRate ?? '';
-      _distantPastController.text = existing?.distantPast ?? '';
-      _distantPastRateController.text = existing?.distantPastRate ?? '';
-      _farthestPastController.text = existing?.farthestPast ?? '';
-      _farthestPastRateController.text = existing?.farthestPastRate ?? '';
-      _otherController.text = existing?.other ?? '';
-      _selectedSurah = existing?.newId;
-      await _loadDropdowns(existing: existing);
+      final existing = widget.existingReport;
+
+      if (existing != null) {
+        _hydrateFromReport(existing);
+        await _loadForEdit(existing);
+      } else {
+        await _loadForAdd();
+      }
     } catch (e) {
       _error = e.toString();
       if (mounted) {
         showToast(context, _error!, isError: true);
       }
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _loadDropdowns({CircleReport? existing}) async {
-    final reportService = context.read<ReportService>();
-    final currentUser = widget.currentUser;
+  void _hydrateFromReport(CircleReport existing) {
+    _status = existing.attendStatueId;
+    _minutesController.text = existing.minutes?.toString() ?? '';
+    _newFromController.text = existing.newFrom ?? '';
+    _newToController.text = existing.newTo ?? '';
+    _newRateController.text = existing.newRate ?? '';
+    _recentPastController.text = existing.recentPast ?? '';
+    _recentPastRateController.text = existing.recentPastRate ?? '';
+    _distantPastController.text = existing.distantPast ?? '';
+    _distantPastRateController.text = existing.distantPastRate ?? '';
+    _farthestPastController.text = existing.farthestPast ?? '';
+    _farthestPastRateController.text = existing.farthestPastRate ?? '';
+    _otherController.text = existing.other ?? '';
+    _selectedSurahNumber = existing.newId;
+  }
 
-    if (currentUser.isAdmin || currentUser.isBranchLeader) {
-      supervisors = await reportService.fetchSupervisors(
-        branchId: currentUser.isBranchLeader ? currentUser.branchId : null,
+  // ========================= ADD MODE =========================
+  Future<void> _loadForAdd() async {
+    final rs = context.read<ReportService>();
+    final user = widget.currentUser;
+
+    if (user.isAdmin || user.isBranchLeader) {
+      supervisors = await rs.fetchSupervisors(
+        branchId: user.isBranchLeader ? user.branchId : null,
       );
-      _selectedSupervisorId = existing?.managerId ?? (supervisors.isNotEmpty ? supervisors.first.id : null);
-    } else if (currentUser.isManager) {
-      _selectedSupervisorId = currentUser.id;
+      teachers = [];
+      circles = [];
+      students = [];
+      _selectedSupervisorId = null;
+      _selectedTeacherId = null;
+      _selectedCircle = null;
+      _selectedStudent = null;
+    } else if (user.isManager) {
+      _selectedSupervisorId = user.id;
+      supervisors = [];
+
+      teachers = await rs.fetchTeachers(
+        managerId: user.id,
+        branchId: user.branchId,
+      );
+      circles = [];
+      students = [];
+      _selectedTeacherId = null;
+      _selectedCircle = null;
+      _selectedStudent = null;
+    } else if (user.isTeacher) {
+      _selectedSupervisorId = null;
+      _selectedTeacherId = user.id;
+
+      circles = await rs.fetchCircles(teacherId: user.id);
+      students = [];
+      _selectedCircle = null;
+      _selectedStudent = null;
     }
 
-    if (currentUser.isTeacher) {
-      _selectedTeacherId = currentUser.id;
-    } else {
-      teachers = await reportService.fetchTeachers(
-        managerId:
-            currentUser.isAdmin || currentUser.isBranchLeader ? _selectedSupervisorId : currentUser.id,
-        branchId:
-            currentUser.isBranchLeader || currentUser.isManager ? currentUser.branchId : null,
+    setState(() {});
+  }
+
+  // ========================= EDIT MODE =========================
+  Future<void> _loadForEdit(CircleReport existing) async {
+    final rs = context.read<ReportService>();
+    final user = widget.currentUser;
+
+    if (user.isAdmin || user.isBranchLeader) {
+      supervisors = await rs.fetchSupervisors(
+        branchId: user.isBranchLeader ? user.branchId : null,
       );
-      if (teachers.isNotEmpty) {
-        _selectedTeacherId = !_hydratedFromExisting && existing?.teacherId != null
-            ? existing!.teacherId
-            : _selectedTeacherId ?? teachers.first.id;
-      }
+      _selectedSupervisorId = existing.managerId;
+
+      teachers = await rs.fetchTeachers(
+        managerId: existing.managerId,
+        branchId: user.branchId,
+      );
+      _selectedTeacherId = existing.teacherId;
+    } else if (user.isManager) {
+      _selectedSupervisorId = user.id;
+      teachers = await rs.fetchTeachers(
+        managerId: user.id,
+        branchId: user.branchId,
+      );
+      _selectedTeacherId = existing.teacherId;
+    } else if (user.isTeacher) {
+      _selectedTeacherId = user.id;
+      supervisors = [];
+      teachers = [];
     }
 
     if (_selectedTeacherId != null) {
-      circles = await reportService.fetchCircles(
-        teacherId: _selectedTeacherId!,
-      );
-      Circle? match;
-      if (!_hydratedFromExisting && existing != null) {
-        for (final circle in circles) {
-          if (circle.id == existing.circleId) {
-            match = circle;
-            break;
-          }
+      circles = await rs.fetchCircles(teacherId: _selectedTeacherId!);
+      if (circles.isNotEmpty) {
+        _selectedCircle = circles.firstWhere(
+          (c) => c.id == existing.circleId,
+          orElse: () => circles.first,
+        );
+        final circle = await rs.fetchCircle(_selectedCircle!.id);
+        students = circle.students;
+        if (students.isNotEmpty) {
+          _selectedStudent = students.firstWhere(
+            (s) => s.id == existing.studentId,
+            orElse: () => students.first,
+          );
         }
       }
-      _selectedCircle = match ?? _selectedCircle ?? (circles.isNotEmpty ? circles.first : null);
-    } else {
+    }
+
+    setState(() {});
+  }
+
+  // ===================== HELPERS FOR CASCADE =====================
+  Future<void> _onSupervisorChanged(String? supervisorId) async {
+    final rs = context.read<ReportService>();
+    final user = widget.currentUser;
+
+    setState(() {
+      _selectedSupervisorId = supervisorId;
+      teachers = [];
       circles = [];
-      _selectedCircle = null;
-    }
-
-    await _loadStudents(initial: true, existing: existing);
-    _hydratedFromExisting = true;
-    setState(() {});
-  }
-
-  Future<void> _loadStudents({bool initial = false, CircleReport? existing}) async {
-    if (_selectedCircle == null || _selectedCircle!.id.isEmpty) {
       students = [];
+      _selectedTeacherId = null;
+      _selectedCircle = null;
       _selectedStudent = null;
-      return;
-    }
-    final reportService = context.read<ReportService>();
-    final circle = await reportService.fetchCircle(_selectedCircle!.id);
-    students = circle.students;
-    if (students.isNotEmpty) {
-      if (initial && !_hydratedFromExisting && existing != null) {
-        _selectedStudent = students.firstWhere(
-          (s) => s.id == existing.studentId,
-          orElse: () => students.first,
-        );
-      } else if (_selectedStudent == null ||
-          !students.any((student) => student.id == _selectedStudent!.id)) {
-        _selectedStudent = students.first;
-      }
-    }
+    });
+
+    if (supervisorId == null) return;
+
+    teachers = await rs.fetchTeachers(
+      managerId: supervisorId,
+      branchId: user.isBranchLeader ? user.branchId : null,
+    );
+
     setState(() {});
   }
 
+  Future<void> _onTeacherChanged(String? teacherId) async {
+    final rs = context.read<ReportService>();
+
+    setState(() {
+      _selectedTeacherId = teacherId;
+      circles = [];
+      students = [];
+      _selectedCircle = null;
+      _selectedStudent = null;
+    });
+
+    if (teacherId == null) return;
+
+    circles = await rs.fetchCircles(teacherId: teacherId);
+
+    if (circles.length == 1) {
+      _selectedCircle = circles.first;
+      await _loadStudentsForSelectedCircle();
+    }
+
+    setState(() {});
+  }
+
+  Future<void> _onCircleChanged(String? circleId) async {
+    if (circleId == null) return;
+
+    _selectedCircle =
+        circles.firstWhere((c) => c.id == circleId, orElse: () => circles.first);
+    students = [];
+    _selectedStudent = null;
+    setState(() {});
+
+    await _loadStudentsForSelectedCircle();
+  }
+
+  Future<void> _loadStudentsForSelectedCircle() async {
+    if (_selectedCircle == null) return;
+    final rs = context.read<ReportService>();
+
+    final circle = await rs.fetchCircle(_selectedCircle!.id);
+    students = circle.students;
+
+    if (students.length == 1) {
+      _selectedStudent = students.first;
+    }
+
+    setState(() {});
+  }
+
+  // =====================================================
+  // BUILD UI
+  // =====================================================
   @override
   Widget build(BuildContext context) {
     final reportService = context.read<ReportService>();
+
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? 'تعديل التقرير' : 'إضافة تقرير')),
+      appBar: AppBar(
+        title: Text(isEditing ? 'تعديل التقرير' : 'إضافة تقرير'),
+      ),
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator.adaptive())
             : _error != null
-                ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (widget.currentUser.isAdmin || widget.currentUser.isBranchLeader) ...[
-                            isEditing
-                                ? _buildReadOnlyField('المشرف', _selectedSupervisorName)
-                                : DropdownButtonFormField<String>(
-                                    value: _selectedSupervisorId,
-                                    isExpanded: true,
-                                    decoration: const InputDecoration(
-                                      labelText: 'المشرف',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    hint: const Text('اختر المشرف'),
-                                    items: supervisors
-                                        .map(
-                                          (sup) => DropdownMenuItem(
-                                            value: sup.id,
-                                            child: Text(sup.fullName),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onTap: () {
-                                      if (supervisors.isEmpty) {
-                                        _loadDropdowns(existing: widget.existingReport);
-                                      }
-                                    },
-                                    onChanged: (value) {
-                                      _selectedSupervisorId = value;
-                                      _selectedTeacherId = null;
-                                      _selectedCircle = null;
-                                      _selectedStudent = null;
-                                      _loadDropdowns(existing: widget.existingReport);
-                                    },
-                                  ),
-                            const SizedBox(height: 12),
-                          ],
-                          if (!widget.currentUser.isTeacher) ...[
-                            isEditing
-                                ? _buildReadOnlyField('المعلم', _selectedTeacherName)
-                                : DropdownButtonFormField<String>(
-                                    value: _selectedTeacherId,
-                                    isExpanded: true,
-                                    decoration: const InputDecoration(
-                                      labelText: 'المعلم',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    hint: const Text('اختر المعلم'),
-                                    items: teachers
-                                        .map(
-                                          (teacher) => DropdownMenuItem(
-                                            value: teacher.id,
-                                            child: Text(teacher.fullName),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onTap: () {
-                                      if (teachers.isEmpty) {
-                                        _loadDropdowns(existing: widget.existingReport);
-                                      }
-                                    },
-                                    onChanged: (value) async {
-                                      _selectedTeacherId = value;
-                                      _selectedCircle = null;
-                                      _selectedStudent = null;
-                                      await _loadDropdowns(existing: widget.existingReport);
-                                    },
-                                  ),
-                            const SizedBox(height: 12),
-                          ],
-                          isEditing
-                              ? _buildReadOnlyField('الحلقة', _selectedCircleName)
-                              : DropdownButtonFormField<String>(
-                                  value: _selectedCircle?.id,
-                                  isExpanded: true,
-                                  decoration: const InputDecoration(
-                                    labelText: 'الحلقة',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  hint: const Text('اختر الحلقة'),
-                                  items: circles
-                                      .map(
-                                        (circle) => DropdownMenuItem(
-                                          value: circle.id,
-                                          child: Text(circle.name),
-                                        ),
-                                      )
-                                      .toList(),
-                                  onTap: () {
-                                    if (circles.isEmpty) {
-                                      _loadDropdowns(existing: widget.existingReport);
-                                    }
-                                  },
-                                  onChanged: (value) async {
-                                    _selectedCircle = circles.firstWhere((c) => c.id == value);
-                                    await _loadStudents();
-                                    setState(() {});
-                                  },
-                                ),
-                          const SizedBox(height: 12),
-                          isEditing
-                              ? _buildReadOnlyField('الطالب', _selectedStudentName)
-                              : DropdownButtonFormField<String>(
-                                  value: _selectedStudent?.id,
-                                  isExpanded: true,
-                                  decoration: const InputDecoration(
-                                    labelText: 'الطالب',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  hint: const Text('اختر الطالب'),
-                                  items: students
-                                      .map(
-                                        (student) => DropdownMenuItem(
-                                          value: student.id,
-                                          child: Text(student.fullName),
-                                        ),
-                                      )
-                                      .toList(),
-                                  onTap: () async {
-                                    if (students.isEmpty && _selectedCircle != null) {
-                                      await _loadStudents();
-                                    }
-                                  },
-                                  onChanged: (value) {
-                                    _selectedStudent = students.firstWhere((s) => s.id == value);
-                                    setState(() {});
-                                  },
-                                ),
-                          const SizedBox(height: 16),
-                          DropdownButtonFormField<AttendStatus>(
-                            value: _status,
-                            decoration: const InputDecoration(
-                              labelText: 'الحالة',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: AttendStatus.values
-                                .map(
-                                  (status) => DropdownMenuItem(
-                                    value: status,
-                                    child: Text(status.label),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (value) {
-                              if (value == null) return;
-                              setState(() {
-                                _status = value;
-                                if (_status != AttendStatus.attended) {
-                                  _newFromController.clear();
-                                  _newToController.clear();
-                                  _newRateController.clear();
-                                  _recentPastController.clear();
-                                  _recentPastRateController.clear();
-                                  _distantPastController.clear();
-                                  _distantPastRateController.clear();
-                                  _farthestPastController.clear();
-                                  _farthestPastRateController.clear();
-                                  _otherController.clear();
-                                  _selectedSurah = null;
-                                }
-                                if (_status == AttendStatus.excusedAbsence) {
-                                  _minutesController.clear();
-                                }
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          if (_status != AttendStatus.excusedAbsence)
-                            TextFormField(
-                              controller: _minutesController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'عدد الدقائق',
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (_status == AttendStatus.excusedAbsence) return null;
-                                if (value == null || value.isEmpty) {
-                                  return 'هذا الحقل مطلوب عند الحضور أو الغياب بدون عذر';
-                                }
-                                return null;
-                              },
-                            ),
-                          if (_status != AttendStatus.excusedAbsence) const SizedBox(height: 12),
-                          if (_status == AttendStatus.attended) ...[
-                            DropdownButtonFormField<int>(
-                              value: _selectedSurah,
-                              decoration: const InputDecoration(
-                                labelText: 'السورة الجديدة',
-                                border: OutlineInputBorder(),
-                              ),
-                              items: List.generate(
-                                10,
-                                (index) => DropdownMenuItem(
-                                  value: index + 1,
-                                  child: Text('سورة رقم ${index + 1}'),
-                                ),
-                              ),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedSurah = value;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            _buildText('من', _newFromController),
-                            const SizedBox(height: 12),
-                            _buildText('إلى', _newToController),
-                            const SizedBox(height: 12),
-                            _buildText('تقدير الجديد', _newRateController),
-                            const SizedBox(height: 12),
-                            _buildText('الماضي القريب', _recentPastController),
-                            const SizedBox(height: 12),
-                            _buildText('تقدير الماضي القريب', _recentPastRateController),
-                            const SizedBox(height: 12),
-                            _buildText('الماضي المتوسط', _distantPastController),
-                            const SizedBox(height: 12),
-                            _buildText('تقدير الماضي المتوسط', _distantPastRateController),
-                            const SizedBox(height: 12),
-                            _buildText('الماضي البعيد', _farthestPastController),
-                            const SizedBox(height: 12),
-                            _buildText('تقدير الماضي البعيد', _farthestPastRateController),
-                            const SizedBox(height: 12),
-                            _buildText('ملاحظات أخرى', _otherController, maxLines: 3),
-                          ],
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _isSaving ? null : () => _submit(reportService),
-                              child: _isSaving
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-                                    )
-                                  : Text(isEditing ? 'حفظ التعديلات' : 'إضافة التقرير'),
-                            ),
-                          )
-                        ],
-                      ),
+                ? Center(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.red),
                     ),
-                  ),
-        ),
-      );
-    }
-
-  Widget _buildReadOnlyField(String label, String? value) {
-    final displayValue = (value ?? '').trim().isEmpty ? 'غير محدد' : value!;
-    return TextFormField(
-      enabled: false,
-      initialValue: displayValue,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
+                  )
+                : _buildForm(reportService),
       ),
     );
   }
 
-  Widget _buildText(String label, TextEditingController controller, {int maxLines = 1}) {
+  Widget _buildForm(ReportService reportService) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _buildSupervisorDropdown(),
+            const SizedBox(height: 12),
+            _buildTeacherDropdown(),
+            const SizedBox(height: 12),
+            _buildCircleDropdown(),
+            const SizedBox(height: 12),
+            _buildStudentDropdown(),
+            const SizedBox(height: 12),
+            _buildStatusDropdown(),
+            const SizedBox(height: 12),
+            _buildMinutesField(),
+            if (_status == AttendStatus.attended) const SizedBox(height: 12),
+            if (_status == AttendStatus.attended) _buildSurahDropdown(),
+            if (_status == AttendStatus.attended) const SizedBox(height: 12),
+            if (_status == AttendStatus.attended) _buildAttendedFields(),
+            const SizedBox(height: 20),
+            _buildSubmit(reportService),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =====================================================
+  // DROPDOWNS
+  // =====================================================
+  Widget _buildSupervisorDropdown() {
+    final user = widget.currentUser;
+
+    if (!(user.isAdmin || user.isBranchLeader)) {
+      return const SizedBox.shrink();
+    }
+
+    final validIds = supervisors.map((s) => s.id).toSet();
+    final value =
+        (_selectedSupervisorId != null && validIds.contains(_selectedSupervisorId))
+            ? _selectedSupervisorId
+            : null;
+
+    return DropdownButtonFormField<String>(
+      key: ValueKey('supervisor-${user.id}-${supervisors.length}'),
+      value: value,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'المشرف',
+        border: OutlineInputBorder(),
+      ),
+      items: supervisors
+          .map(
+            (s) => DropdownMenuItem<String>(
+              value: s.id,
+              child: Text(s.fullName),
+            ),
+          )
+          .toList(),
+      onChanged: supervisors.isEmpty ? null : (v) => _onSupervisorChanged(v),
+    );
+  }
+
+  Widget _buildTeacherDropdown() {
+    final user = widget.currentUser;
+
+    if (user.isTeacher) {
+      return const SizedBox.shrink();
+    }
+
+    final validIds = teachers.map((t) => t.id).toSet();
+    final value =
+        (_selectedTeacherId != null && validIds.contains(_selectedTeacherId))
+            ? _selectedTeacherId
+            : null;
+
+    return DropdownButtonFormField<String>(
+      key: ValueKey('teacher-${_selectedSupervisorId ?? 'none'}-${teachers.length}'),
+      value: value,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'المعلم',
+        border: OutlineInputBorder(),
+      ),
+      items: teachers
+          .map(
+            (t) => DropdownMenuItem<String>(
+              value: t.id,
+              child: Text(t.fullName),
+            ),
+          )
+          .toList(),
+      onChanged: teachers.isEmpty ? null : (v) => _onTeacherChanged(v),
+    );
+  }
+
+  Widget _buildCircleDropdown() {
+    final validIds = circles.map((c) => c.id).toSet();
+    final value =
+        (_selectedCircle != null && validIds.contains(_selectedCircle!.id))
+            ? _selectedCircle!.id
+            : null;
+
+    return DropdownButtonFormField<String>(
+      key: ValueKey('circle-${_selectedTeacherId ?? 'none'}-${circles.length}'),
+      value: value,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'الحلقة',
+        border: OutlineInputBorder(),
+      ),
+      items: circles
+          .map(
+            (c) => DropdownMenuItem<String>(
+              value: c.id,
+              child: Text(c.name),
+            ),
+          )
+          .toList(),
+      onChanged: circles.isEmpty ? null : (v) => _onCircleChanged(v),
+    );
+  }
+
+  Widget _buildStudentDropdown() {
+    // ==== إزالة الطلبة المكررة والتأكد أن الـ id مش فاضي ====
+    final uniqueStudentsMap = <String, Student>{};
+    for (final s in students) {
+      final id = s.id.trim();
+      if (id.isEmpty) continue;
+      uniqueStudentsMap[id] = s; // آخر واحد بنفس الـ id هو اللي يفضل
+    }
+    final uniqueStudents = uniqueStudentsMap.values.toList();
+
+    final validIds = uniqueStudents.map((s) => s.id).toSet();
+    final value =
+        (_selectedStudent != null && validIds.contains(_selectedStudent!.id))
+            ? _selectedStudent!.id
+            : null;
+
+    // لو الـ selectedStudent مش من الـ uniqueStudents نصفره
+    if (_selectedStudent != null && !validIds.contains(_selectedStudent!.id)) {
+      _selectedStudent = null;
+    }
+
+    return DropdownButtonFormField<String>(
+      key: ValueKey('student-${_selectedCircle?.id ?? 'none'}-${uniqueStudents.length}'),
+      value: value,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'الطالب',
+        border: OutlineInputBorder(),
+      ),
+      items: uniqueStudents
+          .map(
+            (s) => DropdownMenuItem<String>(
+              value: s.id,
+              child: Text(s.fullName),
+            ),
+          )
+          .toList(),
+      onChanged: uniqueStudents.isEmpty
+          ? null
+          : (v) {
+              if (v == null) return;
+              _selectedStudent = uniqueStudents.firstWhere(
+                (s) => s.id == v,
+                orElse: () => uniqueStudents.first,
+              );
+              setState(() {});
+            },
+    );
+  }
+
+  Widget _buildStatusDropdown() {
+    return DropdownButtonFormField<AttendStatus>(
+      value: _status,
+      decoration: const InputDecoration(
+        labelText: 'الحالة',
+        border: OutlineInputBorder(),
+      ),
+      items: AttendStatus.values
+          .map(
+            (st) => DropdownMenuItem<AttendStatus>(
+              value: st,
+              child: Text(st.label),
+            ),
+          )
+          .toList(),
+      onChanged: (value) {
+        if (value == null) return;
+        setState(() {
+          _status = value;
+
+          if (_status != AttendStatus.attended) {
+            _newFromController.clear();
+            _newToController.clear();
+            _newRateController.clear();
+            _recentPastController.clear();
+            _recentPastRateController.clear();
+            _distantPastController.clear();
+            _distantPastRateController.clear();
+            _farthestPastController.clear();
+            _farthestPastRateController.clear();
+            _otherController.clear();
+            _selectedSurahNumber = null;
+          }
+
+          if (_status == AttendStatus.excusedAbsence) {
+            _minutesController.clear();
+          }
+        });
+      },
+    );
+  }
+
+  Widget _buildMinutesField() {
+    if (_status == AttendStatus.excusedAbsence) {
+      return const SizedBox.shrink();
+    }
+
+    return TextFormField(
+      controller: _minutesController,
+      keyboardType: TextInputType.number,
+      decoration: const InputDecoration(
+        labelText: 'عدد الدقائق',
+        border: OutlineInputBorder(),
+      ),
+      validator: (value) {
+        if (_status == AttendStatus.excusedAbsence) return null;
+        if (value == null || value.isEmpty) {
+          return 'هذا الحقل مطلوب عند الحضور أو الغياب بدون عذر';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildSurahDropdown() {
+    return DropdownButtonFormField<int>(
+      value: _selectedSurahNumber,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'السورة الجديدة',
+        border: OutlineInputBorder(),
+      ),
+      items: QuranSurah.values
+          .map(
+            (s) => DropdownMenuItem<int>(
+              value: s.number,
+              child: Text('${s.number}. ${s.arabicName}'),
+            ),
+          )
+          .toList(),
+      onChanged: (value) => setState(() => _selectedSurahNumber = value),
+    );
+  }
+
+  Widget _buildAttendedFields() {
+    return Column(
+      children: [
+        _buildText('من', _newFromController),
+        const SizedBox(height: 12),
+        _buildText('إلى', _newToController),
+        const SizedBox(height: 12),
+        _buildText('تقدير الجديد', _newRateController),
+        const SizedBox(height: 12),
+        _buildText('الماضي القريب', _recentPastController),
+        const SizedBox(height: 12),
+        _buildText('تقدير الماضي القريب', _recentPastRateController),
+        const SizedBox(height: 12),
+        _buildText('الماضي المتوسط', _distantPastController),
+        const SizedBox(height: 12),
+        _buildText('تقدير الماضي المتوسط', _distantPastRateController),
+        const SizedBox(height: 12),
+        _buildText('الماضي البعيد', _farthestPastController),
+        const SizedBox(height: 12),
+        _buildText('تقدير الماضي البعيد', _farthestPastRateController),
+        const SizedBox(height: 12),
+        _buildText('ملاحظات أخرى', _otherController, maxLines: 3),
+      ],
+    );
+  }
+
+  Widget _buildText(String label, TextEditingController controller,
+      {int maxLines = 1}) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
@@ -512,8 +633,30 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
-  Future<void> _submit(ReportService reportService) async {
+  // =====================================================
+  // SUBMIT
+  // =====================================================
+  Widget _buildSubmit(ReportService reportService) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isSaving ? null : () => _submit(reportService),
+        child: _isSaving
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator.adaptive(
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(isEditing ? 'حفظ التعديلات' : 'إضافة التقرير'),
+      ),
+    );
+  }
+
+  Future<void> _submit(ReportService service) async {
     if (_selectedCircle == null || _selectedStudent == null) return;
+
     if (!_formKey.currentState!.validate()) return;
 
     final draft = CircleReport(
@@ -527,49 +670,58 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       minutes: _status == AttendStatus.excusedAbsence
           ? null
           : int.tryParse(_minutesController.text),
-      newId: _status == AttendStatus.attended ? _selectedSurah : null,
-      newFrom: _status == AttendStatus.attended ? _newFromController.text : null,
+      newId: _status == AttendStatus.attended ? _selectedSurahNumber : null,
+      newFrom:
+          _status == AttendStatus.attended ? _newFromController.text : null,
       newTo: _status == AttendStatus.attended ? _newToController.text : null,
-      newRate: _status == AttendStatus.attended ? _newRateController.text : null,
-      recentPast: _status == AttendStatus.attended ? _recentPastController.text : null,
-      recentPastRate:
-          _status == AttendStatus.attended ? _recentPastRateController.text : null,
-      distantPast: _status == AttendStatus.attended ? _distantPastController.text : null,
-      distantPastRate:
-          _status == AttendStatus.attended ? _distantPastRateController.text : null,
-      farthestPast: _status == AttendStatus.attended ? _farthestPastController.text : null,
-      farthestPastRate:
-          _status == AttendStatus.attended ? _farthestPastRateController.text : null,
-      other: _status == AttendStatus.attended ? _otherController.text : null,
+      newRate:
+          _status == AttendStatus.attended ? _newRateController.text : null,
+      recentPast:
+          _status == AttendStatus.attended ? _recentPastController.text : null,
+      recentPastRate: _status == AttendStatus.attended
+          ? _recentPastRateController.text
+          : null,
+      distantPast: _status == AttendStatus.attended
+          ? _distantPastController.text
+          : null,
+      distantPastRate: _status == AttendStatus.attended
+          ? _distantPastRateController.text
+          : null,
+      farthestPast: _status == AttendStatus.attended
+          ? _farthestPastController.text
+          : null,
+      farthestPastRate: _status == AttendStatus.attended
+          ? _farthestPastRateController.text
+          : null,
+      other:
+          _status == AttendStatus.attended ? _otherController.text : null,
     );
 
-    setState(() {
-      _isSaving = true;
-      _error = null;
-    });
+    setState(() => _isSaving = true);
+
     try {
       if (isEditing) {
-        await reportService.updateReport(draft);
+        await service.updateReport(draft);
       } else {
-        await reportService.createReport(draft: draft, currentUser: widget.currentUser);
+        await service.createReport(
+          draft: draft,
+          currentUser: widget.currentUser,
+        );
       }
+
       if (mounted) {
-        final message = isEditing ? 'تم تحديث التقرير بنجاح' : 'تم إنشاء التقرير بنجاح';
-        Navigator.of(context).pop(message);
+        Navigator.of(context).pop(
+          isEditing ? 'تم تحديث التقرير بنجاح' : 'تم إنشاء التقرير بنجاح',
+        );
       }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
       if (mounted) {
-        showToast(context, _error!, isError: true);
+        showToast(context, e.toString(), isError: true);
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
+    }
+
+    if (mounted) {
+      setState(() => _isSaving = false);
     }
   }
 }

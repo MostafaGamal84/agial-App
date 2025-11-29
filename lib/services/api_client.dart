@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 /// Thin HTTP helper that mirrors the web app's /api contract and applies
@@ -9,7 +8,11 @@ class ApiClient {
     http.Client? httpClient,
     String? baseUrl,
   })  : _http = httpClient ?? http.Client(),
-        baseUrl = baseUrl ?? const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://ajyalbackend.somee.com/api');
+        baseUrl = baseUrl ??
+            const String.fromEnvironment(
+              'API_BASE_URL',
+              defaultValue: 'https://localhost:7260/api',
+            );
 
   final http.Client _http;
   final String baseUrl;
@@ -19,17 +22,29 @@ class ApiClient {
     _token = token;
   }
 
-  Future<Map<String, dynamic>> post(String path, {Map<String, dynamic>? body}) async {
+  Future<Map<String, dynamic>> post(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
     final response = await _http.post(
       Uri.parse('$baseUrl$path'),
-      headers: _headers(isAuthenticated: path != '/Account/Login' && path != '/Account/VerifyCode'),
+      headers: _headers(
+        isAuthenticated:
+            path != '/Account/Login' && path != '/Account/VerifyCode',
+      ),
       body: jsonEncode(body ?? {}),
     );
     return _decodeResponse(response);
   }
 
-  Future<Map<String, dynamic>> get(String path, {Map<String, dynamic>? query}) async {
-    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query?.map((key, value) => MapEntry(key, '$value')));
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    final uri = Uri.parse('$baseUrl$path').replace(
+      queryParameters:
+          query?.map((key, value) => MapEntry(key, '$value')),
+    );
     final response = await _http.get(
       uri,
       headers: _headers(isAuthenticated: true),
@@ -57,9 +72,10 @@ class ApiClient {
       return decoded is Map<String, dynamic> ? decoded : {'result': decoded};
     }
 
-    final message = decoded is Map<String, dynamic> && decoded['error'] != null
-        ? decoded['error'].toString()
-        : 'HTTP ${response.statusCode}: ${response.reasonPhrase}';
+    final message =
+        decoded is Map<String, dynamic> && decoded['error'] != null
+            ? decoded['error'].toString()
+            : 'HTTP ${response.statusCode}: ${response.reasonPhrase}';
     throw Exception(message);
   }
 }

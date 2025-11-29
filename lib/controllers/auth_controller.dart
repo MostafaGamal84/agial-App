@@ -9,6 +9,7 @@ class AuthController extends ChangeNotifier {
   }
 
   final AuthService _authService;
+
   bool isLoading = false;
   bool isRestoring = true;
   String? errorMessage;

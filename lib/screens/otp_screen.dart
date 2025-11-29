@@ -204,7 +204,7 @@ class _OTPScreenState extends State<OTPScreen> {
                 const Spacer(),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF3B52C),
+                    backgroundColor: const Color.fromARGB(255, 44, 104, 243),
                     foregroundColor: Colors.black,
                     minimumSize: const Size.fromHeight(50),
                     shape: RoundedRectangleBorder(

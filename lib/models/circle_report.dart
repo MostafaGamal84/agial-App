@@ -1,76 +1,53 @@
-import 'package:flutter/foundation.dart';
+// models/circle_report.dart (بس الجزء المهم)
 
-enum AttendStatus { attended, excusedAbsence, unexcusedAbsence }
+enum AttendStatus {
+  attended,
+  absent,
+  excusedAbsence;
 
-extension AttendStatusLabel on AttendStatus {
   String get label {
     switch (this) {
       case AttendStatus.attended:
         return 'حضر';
+      case AttendStatus.absent:
+        return 'غاب';
       case AttendStatus.excusedAbsence:
         return 'غاب بعذر';
-      case AttendStatus.unexcusedAbsence:
-        return 'غاب بدون عذر';
     }
   }
 
-  int get apiValue {
+  static AttendStatus fromApi(int value) {
+    switch (value) {
+      case 0:
+        return AttendStatus.attended;
+      case 1:
+        return AttendStatus.absent;
+      case 2:
+      default:
+        return AttendStatus.excusedAbsence;
+    }
+  }
+
+  int get toApi {
     switch (this) {
       case AttendStatus.attended:
+        return 0;
+      case AttendStatus.absent:
         return 1;
       case AttendStatus.excusedAbsence:
         return 2;
-      case AttendStatus.unexcusedAbsence:
-        return 3;
-    }
-  }
-
-  static AttendStatus fromApi(dynamic value) {
-    switch (value) {
-      case 1:
-        return AttendStatus.attended;
-      case 2:
-        return AttendStatus.excusedAbsence;
-      case 3:
-      default:
-        return AttendStatus.unexcusedAbsence;
     }
   }
 }
 
-@immutable
 class CircleReport {
-  const CircleReport({
-    required this.id,
-    required this.creationTime,
-    required this.teacherId,
-    required this.circleId,
-    required this.studentId,
-    required this.attendStatueId,
-    this.managerId,
-    this.minutes,
-    this.newId,
-    this.newFrom,
-    this.newTo,
-    this.newRate,
-    this.recentPast,
-    this.recentPastRate,
-    this.distantPast,
-    this.distantPastRate,
-    this.farthestPast,
-    this.farthestPastRate,
-    this.theWordsQuranStranger,
-    this.intonation,
-    this.other,
-  });
-
   final String id;
   final DateTime creationTime;
-  final String teacherId;
-  final String circleId;
-  final String studentId;
-  final AttendStatus attendStatueId;
+  final String? teacherId;
   final String? managerId;
+  final String circleId;
+  final int? studentId;        // 👈 هنا التغيير المهم
+  final AttendStatus attendStatueId;
   final int? minutes;
   final int? newId;
   final String? newFrom;
@@ -82,18 +59,71 @@ class CircleReport {
   final String? distantPastRate;
   final String? farthestPast;
   final String? farthestPastRate;
-  final String? theWordsQuranStranger;
-  final String? intonation;
   final String? other;
+
+  CircleReport({
+    required this.id,
+    required this.creationTime,
+    required this.teacherId,
+    required this.managerId,
+    required this.circleId,
+    required this.studentId,
+    required this.attendStatueId,
+    required this.minutes,
+    required this.newId,
+    required this.newFrom,
+    required this.newTo,
+    required this.newRate,
+    required this.recentPast,
+    required this.recentPastRate,
+    required this.distantPast,
+    required this.distantPastRate,
+    required this.farthestPast,
+    required this.farthestPastRate,
+    required this.other,
+  });
+
+  factory CircleReport.fromApi(Map<String, dynamic> json) {
+    final rawStudentId = json['studentId'];
+    final intStudentId = rawStudentId == null
+        ? null
+        : (rawStudentId is int
+            ? rawStudentId
+            : int.tryParse(rawStudentId.toString()));
+
+    return CircleReport(
+      id: json['id']?.toString() ?? '',
+      creationTime: DateTime.tryParse(json['creationTime']?.toString() ?? '') ??
+          DateTime.now(),
+      teacherId: json['teacherId']?.toString(),
+      managerId: json['managerId']?.toString(),
+      circleId: json['circleId']?.toString() ?? '',
+      studentId: intStudentId,
+      attendStatueId:
+          AttendStatus.fromApi(json['attendStatueId'] as int? ?? 0),
+      minutes: json['minutes'] as int?,
+      newId: json['newId'] as int?,
+      newFrom: json['newFrom']?.toString(),
+      newTo: json['newTo']?.toString(),
+      newRate: json['newRate']?.toString(),
+      recentPast: json['recentPast']?.toString(),
+      recentPastRate: json['recentPastRate']?.toString(),
+      distantPast: json['distantPast']?.toString(),
+      distantPastRate: json['distantPastRate']?.toString(),
+      farthestPast: json['farthestPast']?.toString(),
+      farthestPastRate: json['farthestPastRate']?.toString(),
+      other: json['other']?.toString(),
+    );
+  }
 
   CircleReport copyWith({
     String? id,
     DateTime? creationTime,
     String? teacherId,
-    String? circleId,
-    String? studentId,
-    AttendStatus? attendStatueId,
     String? managerId,
+    String? circleId,
+    int? studentId,
+    AttendStatus? attendStatueId,
     int? minutes,
     int? newId,
     String? newFrom,
@@ -105,18 +135,16 @@ class CircleReport {
     String? distantPastRate,
     String? farthestPast,
     String? farthestPastRate,
-    String? theWordsQuranStranger,
-    String? intonation,
     String? other,
   }) {
     return CircleReport(
       id: id ?? this.id,
       creationTime: creationTime ?? this.creationTime,
       teacherId: teacherId ?? this.teacherId,
+      managerId: managerId ?? this.managerId,
       circleId: circleId ?? this.circleId,
       studentId: studentId ?? this.studentId,
       attendStatueId: attendStatueId ?? this.attendStatueId,
-      managerId: managerId ?? this.managerId,
       minutes: minutes ?? this.minutes,
       newId: newId ?? this.newId,
       newFrom: newFrom ?? this.newFrom,
@@ -128,47 +156,17 @@ class CircleReport {
       distantPastRate: distantPastRate ?? this.distantPastRate,
       farthestPast: farthestPast ?? this.farthestPast,
       farthestPastRate: farthestPastRate ?? this.farthestPastRate,
-      theWordsQuranStranger:
-          theWordsQuranStranger ?? this.theWordsQuranStranger,
-      intonation: intonation ?? this.intonation,
       other: other ?? this.other,
     );
   }
 
-  factory CircleReport.fromApi(Map<String, dynamic> json) {
-    return CircleReport(
-      id: json['id']?.toString() ?? '',
-      creationTime: DateTime.tryParse(json['creationTime']?.toString() ?? '') ?? DateTime.now(),
-      teacherId: json['teacherId']?.toString() ?? '',
-      circleId: json['circleId']?.toString() ?? '',
-      studentId: json['studentId']?.toString() ?? '',
-      attendStatueId: AttendStatusHelper.fromApiValue(json['attendStatueId']) ?? AttendStatus.unexcusedAbsence,
-      managerId: json['managerId']?.toString(),
-      minutes: json['minutes'] is int ? json['minutes'] as int? : int.tryParse(json['minutes']?.toString() ?? ''),
-      newId: json['newId'] is int ? json['newId'] as int? : int.tryParse(json['newId']?.toString() ?? ''),
-      newFrom: json['newFrom']?.toString(),
-      newTo: json['newTo']?.toString(),
-      newRate: json['newRate']?.toString(),
-      recentPast: json['recentPast']?.toString(),
-      recentPastRate: json['recentPastRate']?.toString(),
-      distantPast: json['distantPast']?.toString(),
-      distantPastRate: json['distantPastRate']?.toString(),
-      farthestPast: json['farthestPast']?.toString(),
-      farthestPastRate: json['farthestPastRate']?.toString(),
-      theWordsQuranStranger: json['theWordsQuranStranger']?.toString(),
-      intonation: json['intonation']?.toString(),
-      other: json['other']?.toString(),
-    );
-  }
-
   Map<String, dynamic> toApiPayload({bool includeId = false}) {
-    return {
-      if (includeId) 'id': id,
+    final map = <String, dynamic>{
       'teacherId': teacherId,
-      'circleId': circleId,
-      'studentId': studentId,
-      'attendStatueId': attendStatueId.apiValue,
       'managerId': managerId,
+      'circleId': circleId,
+      'studentId': studentId,            // 👈 يترسّل كـ int?
+      'attendStatueId': attendStatueId.toApi,
       'minutes': minutes,
       'newId': newId,
       'newFrom': newFrom,
@@ -180,63 +178,12 @@ class CircleReport {
       'distantPastRate': distantPastRate,
       'farthestPast': farthestPast,
       'farthestPastRate': farthestPastRate,
-      'theWordsQuranStranger': theWordsQuranStranger,
-      'intonation': intonation,
       'other': other,
-      'creationTime': creationTime.toIso8601String(),
     };
+
+    if (includeId) {
+      map['id'] = id;
+    }
+    return map;
   }
-}
-
-class AttendStatusHelper {
-  static AttendStatus? fromApiValue(dynamic value) {
-    if (value == null) return null;
-    final intValue = value is int ? value : int.tryParse(value.toString());
-    return switch (intValue) {
-      1 => AttendStatus.attended,
-      2 => AttendStatus.excusedAbsence,
-      _ => AttendStatus.unexcusedAbsence,
-    };
-  }
-}
-
-class ReportFilter {
-  const ReportFilter({this.teacherId, this.circleId, this.studentId, this.searchTerm});
-
-  final String? teacherId;
-  final String? circleId;
-  final String? studentId;
-  final String? searchTerm;
-
-  factory ReportFilter.fromJson(Map<String, dynamic> json) {
-    return ReportFilter(
-      teacherId: json['teacherId'] as String?,
-      circleId: json['circleId'] as String?,
-      studentId: json['studentId'] as String?,
-      searchTerm: json['searchTerm'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'teacherId': teacherId,
-      'circleId': circleId,
-      'studentId': studentId,
-      'searchTerm': searchTerm,
-    };
-  }
-}
-
-class ReportDisplayRow {
-  const ReportDisplayRow({
-    required this.report,
-    required this.teacherName,
-    required this.studentName,
-    required this.circleName,
-  });
-
-  final CircleReport report;
-  final String teacherName;
-  final String studentName;
-  final String circleName;
 }

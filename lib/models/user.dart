@@ -6,18 +6,35 @@ enum UserType {
   manager('3', 'Supervisor'),
   teacher('4', 'Teacher');
 
-  const UserType(this.id, this.label);
-
   final String id;
   final String label;
+  const UserType(this.id, this.label);
 
-  static UserType fromId(String id) {
-    return UserType.values.firstWhere((role) => role.id == id);
+  /// نستخدم role من الـ API
+  static UserType fromRoleId(String? id) {
+    switch (id) {
+      case '1':
+        return UserType.admin;
+      case '2':
+        return UserType.branchLeader;
+      case '3':
+        return UserType.manager;
+      case '4':
+        return UserType.teacher;
+      default:
+        return UserType.teacher;
+    }
   }
 }
 
 @immutable
 class UserProfile {
+  final String id;
+  final String fullName;
+  final UserType userType;
+  final String branchId;
+  final String? managerId;
+
   const UserProfile({
     required this.id,
     required this.fullName,
@@ -26,34 +43,26 @@ class UserProfile {
     this.managerId,
   });
 
-  final String id;
-  final String fullName;
-  final UserType userType;
-  final String branchId;
-  final String? managerId;
-
   bool get isAdmin => userType == UserType.admin;
   bool get isBranchLeader => userType == UserType.branchLeader;
   bool get isManager => userType == UserType.manager;
   bool get isTeacher => userType == UserType.teacher;
 
-  factory UserProfile.fromApi(Map<String, dynamic> json) {
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['userId']?.toString() ?? '',
       fullName: json['fullName']?.toString() ?? '',
-      userType: UserType.fromId(json['userTypeId']?.toString() ?? '4'),
+      userType: UserType.fromRoleId(json['userTypeId']?.toString()),
       branchId: json['branchId']?.toString() ?? '',
       managerId: json['managerId']?.toString(),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': id,
-      'fullName': fullName,
-      'userTypeId': userType.id,
-      'branchId': branchId,
-      'managerId': managerId,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'userId': id,
+        'fullName': fullName,
+        'userTypeId': userType.id,
+        'branchId': branchId,
+        'managerId': managerId,
+      };
 }
