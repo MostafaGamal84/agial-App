@@ -424,6 +424,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       key: ValueKey('supervisor-${user.id}-${supervisors.length}'),
       value: value,
       isExpanded: true,
+      enabled: !isEditing,
       decoration: const InputDecoration(
         labelText: 'المشرف',
         border: OutlineInputBorder(),
@@ -457,6 +458,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       key: ValueKey('teacher-${_selectedSupervisorId ?? 'none'}-${teachers.length}'),
       value: value,
       isExpanded: true,
+      enabled: !isEditing,
       decoration: const InputDecoration(
         labelText: 'المعلم',
         border: OutlineInputBorder(),
@@ -484,6 +486,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       key: ValueKey('circle-${_selectedTeacherId ?? 'none'}-${circles.length}'),
       value: value,
       isExpanded: true,
+      enabled: !isEditing,
       decoration: const InputDecoration(
         labelText: 'الحلقة',
         border: OutlineInputBorder(),
@@ -525,6 +528,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           'student-${_selectedCircle?.id ?? 'none'}-${uniqueStudents.length}'),
       value: value,
       isExpanded: true,
+      enabled: !isEditing,
       decoration: const InputDecoration(
         labelText: 'الطالب',
         border: OutlineInputBorder(),
