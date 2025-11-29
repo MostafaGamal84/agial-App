@@ -391,7 +391,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             const SizedBox(height: 12),
             _buildStatusDropdown(),
             const SizedBox(height: 12),
-            _buildMinutesField(),
+            if (_status != AttendStatus.ExcusedAbsence)
+              _buildMinutesField(),
             if (_status == AttendStatus.attended) const SizedBox(height: 12),
             if (_status == AttendStatus.attended) _buildSurahDropdown(),
             if (_status == AttendStatus.attended) const SizedBox(height: 12),
@@ -617,13 +618,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         labelText: 'عدد الدقائق',
         border: OutlineInputBorder(),
       ),
-      validator: (value) {
-        if (_status == AttendStatus.ExcusedAbsence) return null;
-        if (value == null || value.isEmpty) {
-          return 'هذا الحقل مطلوب عند الحضور أو الغياب بدون عذر';
-        }
-        return null;
-      },
     );
   }
 
