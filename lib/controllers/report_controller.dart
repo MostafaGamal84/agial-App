@@ -3,66 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/circle_report.dart';
+import '../models/report_filter.dart';
 import '../models/user.dart';
 import '../services/report_service.dart';
-
-/// =======================================================
-/// FILTER MODEL
-/// =======================================================
-class ReportFilter {
-  final String? supervisorId;
-  final String? teacherId;
-  final String? circleId;
-  final String? studentId;
-  final String? searchTerm;
-
-  const ReportFilter({
-    this.supervisorId,
-    this.teacherId,
-    this.circleId,
-    this.studentId,
-    this.searchTerm,
-  });
-
-  /// Factory for decoding from JSON (to restore saved filter)
-  factory ReportFilter.fromJson(Map<String, dynamic> json) {
-    return ReportFilter(
-      supervisorId: json['supervisorId'] as String?,
-      teacherId: json['teacherId'] as String?,
-      circleId: json['circleId'] as String?,
-      studentId: json['studentId'] as String?,
-      searchTerm: json['searchTerm'] as String?,
-    );
-  }
-
-  /// Converts to JSON for saving locally
-  Map<String, dynamic> toJson() {
-    return {
-      'supervisorId': supervisorId,
-      'teacherId': teacherId,
-      'circleId': circleId,
-      'studentId': studentId,
-      'searchTerm': searchTerm,
-    };
-  }
-
-  /// Clone with updated fields
-  ReportFilter copyWith({
-    String? supervisorId,
-    String? teacherId,
-    String? circleId,
-    String? studentId,
-    String? searchTerm,
-  }) {
-    return ReportFilter(
-      supervisorId: supervisorId ?? this.supervisorId,
-      teacherId: teacherId ?? this.teacherId,
-      circleId: circleId ?? this.circleId,
-      studentId: studentId ?? this.studentId,
-      searchTerm: searchTerm ?? this.searchTerm,
-    );
-  }
-}
 
 /// =======================================================
 /// REPORT CONTROLLER
