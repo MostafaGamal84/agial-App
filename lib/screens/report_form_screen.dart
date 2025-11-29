@@ -39,6 +39,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   late TextEditingController _distantPastRateController;
   late TextEditingController _farthestPastController;
   late TextEditingController _farthestPastRateController;
+  late TextEditingController intonation;
+  late TextEditingController theWordsQuranStranger;
   late TextEditingController _otherController;
 
   // Selections
@@ -463,10 +465,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
   Widget _buildStudentDropdown() {
     // ==== إزالة الطلبة المكررة والتأكد أن الـ id مش فاضي ====
-    final uniqueStudentsMap = <String, Student>{};
+    final uniqueStudentsMap = <int, Student>{};
     for (final s in students) {
-      final id = s.id.trim();
-      if (id.isEmpty) continue;
+      final id = s.id;
+      if (id.toString().isEmpty) continue;
       uniqueStudentsMap[id] = s; // آخر واحد بنفس الـ id هو اللي يفضل
     }
     final uniqueStudents = uniqueStudentsMap.values.toList();
@@ -482,7 +484,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _selectedStudent = null;
     }
 
-    return DropdownButtonFormField<String>(
+    return DropdownButtonFormField<int>(
       key: ValueKey('student-${_selectedCircle?.id ?? 'none'}-${uniqueStudents.length}'),
       value: value,
       isExpanded: true,
@@ -492,7 +494,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       ),
       items: uniqueStudents
           .map(
-            (s) => DropdownMenuItem<String>(
+            (s) => DropdownMenuItem<int>(
               value: s.id,
               child: Text(s.fullName),
             ),
@@ -545,7 +547,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             _selectedSurahNumber = null;
           }
 
-          if (_status == AttendStatus.excusedAbsence) {
+          if (_status == AttendStatus.ExcusedAbsence) {
             _minutesController.clear();
           }
         });
@@ -554,7 +556,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   }
 
   Widget _buildMinutesField() {
-    if (_status == AttendStatus.excusedAbsence) {
+    if (_status == AttendStatus.UnexcusedAbsence) {
       return const SizedBox.shrink();
     }
 
@@ -566,7 +568,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         border: OutlineInputBorder(),
       ),
       validator: (value) {
-        if (_status == AttendStatus.excusedAbsence) return null;
+        if (_status == AttendStatus.ExcusedAbsence) return null;
         if (value == null || value.isEmpty) {
           return 'هذا الحقل مطلوب عند الحضور أو الغياب بدون عذر';
         }
@@ -667,7 +669,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       circleId: _selectedCircle!.id,
       studentId: _selectedStudent!.id,
       attendStatueId: _status,
-      minutes: _status == AttendStatus.excusedAbsence
+      minutes: _status == AttendStatus.ExcusedAbsence
           ? null
           : int.tryParse(_minutesController.text),
       newId: _status == AttendStatus.attended ? _selectedSurahNumber : null,
@@ -692,6 +694,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           : null,
       farthestPastRate: _status == AttendStatus.attended
           ? _farthestPastRateController.text
+          : null,
+            intonation: _status == AttendStatus.attended
+          ? intonation.text
+          : null,
+            theWordsQuranStranger: _status == AttendStatus.attended
+          ? theWordsQuranStranger.text
           : null,
       other:
           _status == AttendStatus.attended ? _otherController.text : null,

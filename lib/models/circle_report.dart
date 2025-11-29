@@ -2,17 +2,17 @@
 
 enum AttendStatus {
   attended,
-  absent,
-  excusedAbsence;
+  ExcusedAbsence,
+  UnexcusedAbsence;
 
   String get label {
     switch (this) {
       case AttendStatus.attended:
         return 'حضر';
-      case AttendStatus.absent:
-        return 'غاب';
-      case AttendStatus.excusedAbsence:
-        return 'غاب بعذر';
+      case AttendStatus.ExcusedAbsence:
+        return 'تغيب بعذر';
+      case AttendStatus.UnexcusedAbsence:
+        return 'تغيب بدون عذر';
     }
   }
 
@@ -21,10 +21,10 @@ enum AttendStatus {
       case 0:
         return AttendStatus.attended;
       case 1:
-        return AttendStatus.absent;
+        return AttendStatus.ExcusedAbsence;
       case 2:
       default:
-        return AttendStatus.excusedAbsence;
+        return AttendStatus.UnexcusedAbsence;
     }
   }
 
@@ -32,9 +32,9 @@ enum AttendStatus {
     switch (this) {
       case AttendStatus.attended:
         return 0;
-      case AttendStatus.absent:
+      case AttendStatus.ExcusedAbsence:
         return 1;
-      case AttendStatus.excusedAbsence:
+      case AttendStatus.UnexcusedAbsence:
         return 2;
     }
   }
@@ -59,6 +59,8 @@ class CircleReport {
   final String? distantPastRate;
   final String? farthestPast;
   final String? farthestPastRate;
+  final String? intonation;
+  final String? theWordsQuranStranger;
   final String? other;
 
   CircleReport({
@@ -80,6 +82,8 @@ class CircleReport {
     required this.distantPastRate,
     required this.farthestPast,
     required this.farthestPastRate,
+    required this.theWordsQuranStranger,
+    required this.intonation,
     required this.other,
   });
 
@@ -112,6 +116,8 @@ class CircleReport {
       distantPastRate: json['distantPastRate']?.toString(),
       farthestPast: json['farthestPast']?.toString(),
       farthestPastRate: json['farthestPastRate']?.toString(),
+      theWordsQuranStranger: json['theWordsQuranStranger']?.toString(),
+      intonation: json['intonation']?.toString(),
       other: json['other']?.toString(),
     );
   }
@@ -135,6 +141,8 @@ class CircleReport {
     String? distantPastRate,
     String? farthestPast,
     String? farthestPastRate,
+    String? intonation,
+    String? theWordsQuranStranger,
     String? other,
   }) {
     return CircleReport(
@@ -156,6 +164,8 @@ class CircleReport {
       distantPastRate: distantPastRate ?? this.distantPastRate,
       farthestPast: farthestPast ?? this.farthestPast,
       farthestPastRate: farthestPastRate ?? this.farthestPastRate,
+      intonation: intonation ?? this.intonation,
+      theWordsQuranStranger: theWordsQuranStranger ?? this.theWordsQuranStranger,
       other: other ?? this.other,
     );
   }

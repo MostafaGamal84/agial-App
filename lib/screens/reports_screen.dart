@@ -172,9 +172,9 @@ class _ReportCard extends StatelessWidget {
     switch (status) {
       case AttendStatus.attended:
         return Colors.green.shade600;
-      case AttendStatus.excusedAbsence:
+      case AttendStatus.ExcusedAbsence:
         return Colors.orange.shade700;
-      case AttendStatus.unexcusedAbsence:
+      case AttendStatus.UnexcusedAbsence:
         return Colors.red.shade700;
     }
   }

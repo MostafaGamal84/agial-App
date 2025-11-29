@@ -123,9 +123,9 @@ class _ReportFiltersState extends State<ReportFilters> {
     final circle = await widget.reportService.fetchCircle(_selectedCircleId!);
     students = circle.students;
     if (students.isNotEmpty) {
-      _selectedStudentId = (!_hydratedFromInitial && widget.initialFilter.studentId != null)
-          ? widget.initialFilter.studentId
-          : _selectedStudentId ?? students.first.id;
+      // _selectedStudentId = (!_hydratedFromInitial && widget.initialFilter.studentId != null)
+      //     ? widget.initialFilter.studentId
+      //     : _selectedStudentId ?? students.first.id;
     }
     _notify();
   }
@@ -135,7 +135,7 @@ class _ReportFiltersState extends State<ReportFilters> {
       ReportFilter(
         teacherId: widget.currentUser.isTeacher ? widget.currentUser.id : _selectedTeacherId,
         circleId: _selectedCircleId,
-        studentId: _selectedStudentId,
+        // studentId: _selectedStudentId,
       ),
     );
     _hydratedFromInitial = true;
