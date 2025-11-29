@@ -17,7 +17,7 @@ class Circle {
 
   factory Circle.fromApi(Map<String, dynamic> json) {
     final studentsList = (json['students'] as List<dynamic>?)
-            ?.map((e) => Student.fromApi(e as Map<String, dynamic>, circleId: json['id'].toString(), teacherId: json['teacherId']?.toString()))
+            ?.map((e) => Student.fromApi(e as Map<String, dynamic>))
             .toList() ??
         [];
     return Circle(
