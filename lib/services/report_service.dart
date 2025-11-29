@@ -1,5 +1,6 @@
 import '../models/circle.dart';
 import '../models/circle_report.dart';
+import '../models/report_filter.dart';
 import '../models/user.dart';
 import '../models/student.dart';
 import 'api_client.dart';
@@ -239,19 +240,3 @@ class ReportDisplayRow {
   });
 }
 
-// ============================================================
-// FILTER MODEL FOR SEARCH
-// ============================================================
-class ReportFilter {
-  final String? searchTerm;
-  final String? circleId;
-  final int? studentId;
-  final String? teacherId;
-
-  const ReportFilter({
-    this.searchTerm,
-    this.circleId,
-    this.studentId,
-    this.teacherId,
-  });
-}

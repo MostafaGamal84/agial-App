@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/circle.dart';
-import '../models/circle_report.dart';
+import '../models/report_filter.dart';
 import '../models/student.dart';
 import '../models/user.dart';
 import '../services/report_service.dart';
