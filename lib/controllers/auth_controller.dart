@@ -42,6 +42,7 @@ class AuthController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     try {
+      // 👈 مهم: auth_service.verifyOtp يرجّع UserProfile مبني من data اللي فيها role/branchId
       final user = await _authService.verifyOtp(otp);
       codeSent = false;
       return user;

@@ -10,7 +10,7 @@ enum UserType {
   final String label;
   const UserType(this.id, this.label);
 
-  /// نستخدم role من الـ API
+  /// نحول الـ role أو userTypeId القادم من الـ API إلى UserType
   static UserType fromRoleId(String? id) {
     switch (id) {
       case '1':
@@ -49,10 +49,14 @@ class UserProfile {
   bool get isTeacher => userType == UserType.teacher;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    // ⚠️ هنا التعديل المهم:
+    // الـ API الحالي بيرجع "role"، وفي المستقبل ممكن يرجّع "userTypeId"
+    final dynamic rawRole = json['userTypeId'] ?? json['role'];
+
     return UserProfile(
       id: json['userId']?.toString() ?? '',
       fullName: json['fullName']?.toString() ?? '',
-      userType: UserType.fromRoleId(json['userTypeId']?.toString()),
+      userType: UserType.fromRoleId(rawRole?.toString()),
       branchId: json['branchId']?.toString() ?? '',
       managerId: json['managerId']?.toString(),
     );

@@ -11,26 +11,50 @@ class ReportService {
   final ApiClient _apiClient;
 
   // ============================================================
-  // SUPERVISORS (userTypeId = 3)
+  // SUPERVISORS (userTypeId = 3) - Managers
   // ============================================================
   Future<List<UserProfile>> fetchSupervisors({
     String? branchId,
   }) async {
+    // نجهز الـ query parameters
+    final query = <String, dynamic>{
+      'userTypeId': UserType.manager.id, // 3
+    };
+
+    // لو فيه branchId نضيفه، لو null مانبعتوش
+    if (branchId != null && branchId.isNotEmpty) {
+      query['branchId'] = branchId;
+    }
+
     final response = await _apiClient.get(
       '/UsersForGroups/GetUsersForSelects',
-      query: {
-        'userTypeId': UserType.manager.id,
-        if (branchId != null) 'branchId': branchId,
-      },
+      query: query,
     );
 
-    final items = response['result'] as List<dynamic>? ??
-        response['items'] as List<dynamic>? ??
-        [];
+    // الريسبونس اللي بعتّه:
+    // { isSuccess, errors, data: { totalCount, items: [ {...}, ... ] } }
+    final container = (response['data'] ??
+            response['result'] ??
+            response) as Map<String, dynamic>;
 
-    return items
-        .map((item) => UserProfile.fromJson(_normalize(item)))
-        .toList();
+    final rawItems = container['items'] as List<dynamic>? ?? const [];
+
+    // هنا ما نستخدمش UserProfile.fromJson مباشرة،
+    // لأن الـ JSON هنا مختلف عن JSON حق تسجيل الدخول
+    final supervisors = rawItems.map((item) {
+      final map = _normalize(item);
+
+      return UserProfile(
+        id: map['id']?.toString() ?? '',
+        fullName: map['fullName']?.toString() ?? '',
+        // دول مشرفين → UserType.manager
+        userType: UserType.manager,
+        branchId: map['branchId']?.toString() ?? '',
+        managerId: null,
+      );
+    }).where((u) => u.id.isNotEmpty).toList();
+
+    return supervisors;
   }
 
   // ============================================================
@@ -41,24 +65,40 @@ class ReportService {
     String? branchId,
   }) async {
     final query = <String, dynamic>{
-      'userTypeId': UserType.teacher.id,
+      'userTypeId': UserType.teacher.id, // 4
     };
 
-    if (managerId != null) query['managerId'] = managerId;
-    if (branchId != null) query['branchId'] = branchId;
+    if (managerId != null && managerId.isNotEmpty) {
+      query['managerId'] = managerId;
+    }
+    if (branchId != null && branchId.isNotEmpty) {
+      query['branchId'] = branchId;
+    }
 
     final response = await _apiClient.get(
       '/UsersForGroups/GetUsersForSelects',
       query: query,
     );
 
-    final items = response['result'] as List<dynamic>? ??
-        response['items'] as List<dynamic>? ??
-        [];
+    final container = (response['data'] ??
+            response['result'] ??
+            response) as Map<String, dynamic>;
 
-    return items
-        .map((item) => UserProfile.fromJson(_normalize(item)))
-        .toList();
+    final rawItems = container['items'] as List<dynamic>? ?? const [];
+
+    final teachers = rawItems.map((item) {
+      final map = _normalize(item);
+
+      return UserProfile(
+        id: map['id']?.toString() ?? '',
+        fullName: map['fullName']?.toString() ?? '',
+        userType: UserType.teacher,
+        branchId: map['branchId']?.toString() ?? '',
+        managerId: map['managerId']?.toString(),
+      );
+    }).where((u) => u.id.isNotEmpty).toList();
+
+    return teachers;
   }
 
   // ============================================================
@@ -76,8 +116,9 @@ class ReportService {
       },
     );
 
-    final result = response['result'] ?? response;
-    final items = result['items'] as List<dynamic>? ?? [];
+    // ABP-style: { result: { totalCount, items: [...] } }
+    final result = response['result'] ?? response['data'] ?? response;
+    final items = (result['items'] as List<dynamic>? ?? const []);
 
     return items
         .map((item) => Circle.fromApi(_normalize(item)))
@@ -93,7 +134,7 @@ class ReportService {
       query: {'id': id},
     );
 
-    final map = response['result'] ?? response;
+    final map = response['result'] ?? response['data'] ?? response;
     return Circle.fromApi(_normalize(map));
   }
 
@@ -131,6 +172,7 @@ class ReportService {
     final response =
         await _apiClient.get('/CircleReport/GetResultsByFilter', query: query);
 
+    // دعم أكثر من شكل للريسبونس (result / data / مباشر)
     final result =
         response['result'] ?? response['data'] ?? response;
     final itemsDynamic = result['items'] ?? [];
@@ -170,7 +212,7 @@ class ReportService {
       query: {'id': id},
     );
 
-    final map = response['result'] ?? response;
+    final map = response['result'] ?? response['data'] ?? response;
     return CircleReport.fromApi(_normalize(map));
   }
 
@@ -181,19 +223,23 @@ class ReportService {
     required CircleReport draft,
     required UserProfile currentUser,
   }) async {
-    final payload = draft.copyWith(
+    // في حالة أن المعلم هو اللي داخل: نثبت teacherId = currentUser.id
+    // في حالة أن المشرف هو اللي داخل: نثبت managerId = currentUser.id
+    final payloadReport = draft.copyWith(
       teacherId: currentUser.isTeacher ? currentUser.id : draft.teacherId,
       managerId: currentUser.isManager ? currentUser.id : draft.managerId,
     );
 
     final response = await _apiClient.post(
       '/CircleReport/Create',
-      body: payload.toApiPayload(),
+      body: payloadReport.toApiPayload(),
     );
 
-    final newId = response['result']?.toString() ?? payload.id;
+    final newId = response['result']?.toString() ??
+        response['data']?.toString() ??
+        payloadReport.id;
 
-    return payload.copyWith(
+    return payloadReport.copyWith(
       id: newId,
       creationTime: DateTime.now(),
     );
@@ -219,7 +265,7 @@ class ReportService {
         (key, val) => MapEntry(key.toString(), val),
       );
     }
-    return {};
+    return <String, dynamic>{};
   }
 }
 
@@ -239,4 +285,3 @@ class ReportDisplayRow {
     required this.circleName,
   });
 }
-

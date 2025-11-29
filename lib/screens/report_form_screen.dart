@@ -78,6 +78,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _distantPastRateController = TextEditingController();
     _farthestPastController = TextEditingController();
     _farthestPastRateController = TextEditingController();
+    intonation = TextEditingController();
+    theWordsQuranStranger = TextEditingController();
     _otherController = TextEditingController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
@@ -95,6 +97,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _distantPastRateController.dispose();
     _farthestPastController.dispose();
     _farthestPastRateController.dispose();
+    intonation.dispose();
+    theWordsQuranStranger.dispose();
     _otherController.dispose();
     super.dispose();
   }
@@ -141,6 +145,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _distantPastRateController.text = existing.distantPastRate ?? '';
     _farthestPastController.text = existing.farthestPast ?? '';
     _farthestPastRateController.text = existing.farthestPastRate ?? '';
+    intonation.text = existing.intonation ?? '';
+    theWordsQuranStranger.text = existing.theWordsQuranStranger ?? '';
     _otherController.text = existing.other ?? '';
     _selectedSurahNumber = existing.newId;
   }
@@ -150,10 +156,20 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final rs = context.read<ReportService>();
     final user = widget.currentUser;
 
+    debugPrint(
+        '[ReportFormScreen] currentUser: id=${user.id}, type=${user.userType}, isAdmin=${user.isAdmin}, isBranchLeader=${user.isBranchLeader}');
+
     if (user.isAdmin || user.isBranchLeader) {
-      supervisors = await rs.fetchSupervisors(
-        branchId: _branchIdForSupervisorFilters(user),
-      );
+      final branchFilter = _branchIdForSupervisorFilters(user);
+      debugPrint('[_loadForAdd] branchFilter for supervisors: $branchFilter');
+
+      supervisors = await rs.fetchSupervisors(branchId: branchFilter);
+
+      debugPrint('[_loadForAdd] Loaded supervisors count: ${supervisors.length}');
+      for (final s in supervisors) {
+        debugPrint('Supervisor: ${s.id} - ${s.fullName}');
+      }
+
       teachers = [];
       circles = [];
       students = [];
@@ -193,14 +209,19 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final user = widget.currentUser;
 
     if (user.isAdmin || user.isBranchLeader) {
+      final branchFilter = _branchIdForSupervisorFilters(user);
+      debugPrint('[_loadForEdit] branchFilter for supervisors: $branchFilter');
+
       supervisors = await rs.fetchSupervisors(
-        branchId: _branchIdForSupervisorFilters(user),
+        branchId: branchFilter,
       );
+      debugPrint('[_loadForEdit] Loaded supervisors count: ${supervisors.length}');
+
       _selectedSupervisorId = existing.managerId;
 
       teachers = await rs.fetchTeachers(
         managerId: existing.managerId,
-        branchId: _branchIdForSupervisorFilters(user),
+        branchId: branchFilter,
       );
       _selectedTeacherId = existing.teacherId;
     } else if (user.isManager) {
@@ -254,9 +275,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     if (supervisorId == null) return;
 
+    final branchFilter = _branchIdForSupervisorFilters(user);
+    debugPrint('[_onSupervisorChanged] branchFilter: $branchFilter');
+
     teachers = await rs.fetchTeachers(
       managerId: supervisorId,
-      branchId: _branchIdForSupervisorFilters(user),
+      branchId: branchFilter,
     );
 
     setState(() {});
@@ -312,8 +336,15 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   }
 
   String? _branchIdForSupervisorFilters(UserProfile user) {
+    // Admin: رجّع null عشان يجيب كل المشرفين بدون فلتر فرع
+    if (user.isAdmin) return null;
+
+    // مدير فرع: فلتر حسب الفرع
     if (user.isBranchLeader) return user.branchId;
+
+    // لو في branchId معروف للمستخدم استخدمه
     if (user.branchId.isNotEmpty) return user.branchId;
+
     return null;
   }
 
@@ -470,12 +501,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   }
 
   Widget _buildStudentDropdown() {
-    // ==== إزالة الطلبة المكررة والتأكد أن الـ id مش فاضي ====
+    // إزالة الطلبة المكررة والتأكد أن الـ id مش فاضي
     final uniqueStudentsMap = <int, Student>{};
     for (final s in students) {
       final id = s.id;
       if (id.toString().isEmpty) continue;
-      uniqueStudentsMap[id] = s; // آخر واحد بنفس الـ id هو اللي يفضل
+      uniqueStudentsMap[id] = s;
     }
     final uniqueStudents = uniqueStudentsMap.values.toList();
 
@@ -485,13 +516,13 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ? _selectedStudent!.id
             : null;
 
-    // لو الـ selectedStudent مش من الـ uniqueStudents نصفره
     if (_selectedStudent != null && !validIds.contains(_selectedStudent!.id)) {
       _selectedStudent = null;
     }
 
     return DropdownButtonFormField<int>(
-      key: ValueKey('student-${_selectedCircle?.id ?? 'none'}-${uniqueStudents.length}'),
+      key: ValueKey(
+          'student-${_selectedCircle?.id ?? 'none'}-${uniqueStudents.length}'),
       value: value,
       isExpanded: true,
       decoration: const InputDecoration(
@@ -549,6 +580,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             _distantPastRateController.clear();
             _farthestPastController.clear();
             _farthestPastRateController.clear();
+            intonation.clear();
+            theWordsQuranStranger.clear();
             _otherController.clear();
             _selectedSurahNumber = null;
           }
@@ -623,6 +656,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         _buildText('الماضي البعيد', _farthestPastController),
         const SizedBox(height: 12),
         _buildText('تقدير الماضي البعيد', _farthestPastRateController),
+        const SizedBox(height: 12),
+        _buildText('أحكام التجويد / ملاحظات على التلاوة', intonation,
+            maxLines: 2),
+        const SizedBox(height: 12),
+        _buildText('كلمات غريبة أو صعبة في القرآن', theWordsQuranStranger,
+            maxLines: 2),
         const SizedBox(height: 12),
         _buildText('ملاحظات أخرى', _otherController, maxLines: 3),
       ],
@@ -701,10 +740,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       farthestPastRate: _status == AttendStatus.attended
           ? _farthestPastRateController.text
           : null,
-            intonation: _status == AttendStatus.attended
-          ? intonation.text
-          : null,
-            theWordsQuranStranger: _status == AttendStatus.attended
+      intonation:
+          _status == AttendStatus.attended ? intonation.text : null,
+      theWordsQuranStranger: _status == AttendStatus.attended
           ? theWordsQuranStranger.text
           : null,
       other:
