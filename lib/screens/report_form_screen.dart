@@ -152,7 +152,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     if (user.isAdmin || user.isBranchLeader) {
       supervisors = await rs.fetchSupervisors(
-        branchId: user.isBranchLeader ? user.branchId : null,
+        branchId: _branchIdForSupervisorFilters(user),
       );
       teachers = [];
       circles = [];
@@ -194,13 +194,13 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     if (user.isAdmin || user.isBranchLeader) {
       supervisors = await rs.fetchSupervisors(
-        branchId: user.isBranchLeader ? user.branchId : null,
+        branchId: _branchIdForSupervisorFilters(user),
       );
       _selectedSupervisorId = existing.managerId;
 
       teachers = await rs.fetchTeachers(
         managerId: existing.managerId,
-        branchId: user.branchId,
+        branchId: _branchIdForSupervisorFilters(user),
       );
       _selectedTeacherId = existing.teacherId;
     } else if (user.isManager) {
@@ -256,7 +256,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     teachers = await rs.fetchTeachers(
       managerId: supervisorId,
-      branchId: user.isBranchLeader ? user.branchId : null,
+      branchId: _branchIdForSupervisorFilters(user),
     );
 
     setState(() {});
@@ -309,6 +309,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     }
 
     setState(() {});
+  }
+
+  String? _branchIdForSupervisorFilters(UserProfile user) {
+    if (user.isBranchLeader) return user.branchId;
+    if (user.branchId.isNotEmpty) return user.branchId;
+    return null;
   }
 
   // =====================================================
