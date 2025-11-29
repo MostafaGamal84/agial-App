@@ -436,7 +436,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ),
           )
           .toList(),
-      onChanged: supervisors.isEmpty ? null : (v) => _onSupervisorChanged(v),
+      onChanged:
+          isEditing || supervisors.isEmpty ? null : (v) => _onSupervisorChanged(v),
     );
   }
 
@@ -469,7 +470,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ),
           )
           .toList(),
-      onChanged: teachers.isEmpty ? null : (v) => _onTeacherChanged(v),
+      onChanged: isEditing || teachers.isEmpty ? null : (v) => _onTeacherChanged(v),
     );
   }
 
@@ -496,7 +497,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ),
           )
           .toList(),
-      onChanged: circles.isEmpty ? null : (v) => _onCircleChanged(v),
+      onChanged: isEditing || circles.isEmpty ? null : (v) => _onCircleChanged(v),
     );
   }
 
@@ -537,7 +538,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ),
           )
           .toList(),
-      onChanged: uniqueStudents.isEmpty
+      onChanged: isEditing || uniqueStudents.isEmpty
           ? null
           : (v) {
               if (v == null) return;
