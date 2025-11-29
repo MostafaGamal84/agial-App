@@ -18,11 +18,11 @@ enum AttendStatus {
 
   static AttendStatus fromApi(int value) {
     switch (value) {
-      case 0:
-        return AttendStatus.attended;
       case 1:
-        return AttendStatus.ExcusedAbsence;
+        return AttendStatus.attended;
       case 2:
+        return AttendStatus.ExcusedAbsence;
+      case 3:
       default:
         return AttendStatus.UnexcusedAbsence;
     }
@@ -31,11 +31,11 @@ enum AttendStatus {
   int get toApi {
     switch (this) {
       case AttendStatus.attended:
-        return 0;
-      case AttendStatus.ExcusedAbsence:
         return 1;
-      case AttendStatus.UnexcusedAbsence:
+      case AttendStatus.ExcusedAbsence:
         return 2;
+      case AttendStatus.UnexcusedAbsence:
+        return 3;
     }
   }
 }

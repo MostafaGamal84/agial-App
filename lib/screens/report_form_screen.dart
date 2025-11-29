@@ -610,10 +610,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   }
 
   Widget _buildMinutesField() {
-    if (_status == AttendStatus.UnexcusedAbsence) {
-      return const SizedBox.shrink();
-    }
-
     return TextFormField(
       controller: _minutesController,
       keyboardType: TextInputType.number,
