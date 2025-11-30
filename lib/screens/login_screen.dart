@@ -129,6 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => OTPScreen(
                                     loginValue: _loginController.text,
+                                    initialCode: auth.pendingOtpCode,
                                   ),
                                 ),
                               );

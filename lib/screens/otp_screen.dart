@@ -7,9 +7,10 @@ import 'reports_screen.dart';
 import '../widgets/toast.dart';
 
 class OTPScreen extends StatefulWidget {
-  const OTPScreen({super.key, required this.loginValue});
+  const OTPScreen({super.key, required this.loginValue, this.initialCode});
 
   final String loginValue;
+  final String? initialCode;
 
   @override
   State<OTPScreen> createState() => _OTPScreenState();
@@ -25,6 +26,7 @@ class _OTPScreenState extends State<OTPScreen> {
     super.initState();
     _otpControllers = List.generate(4, (_) => TextEditingController());
     _focusNodes = List.generate(4, (_) => FocusNode());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prefillOtp());
   }
 
   @override
@@ -54,6 +56,21 @@ class _OTPScreenState extends State<OTPScreen> {
     }
 
     field.didChange(_otpCode);
+  }
+
+  void _prefillOtp() {
+    final code = widget.initialCode;
+    if (code == null || code.isEmpty) return;
+
+    for (var i = 0; i < _otpControllers.length && i < code.length; i++) {
+      _otpControllers[i]
+        ..text = code[i]
+        ..selection = TextSelection.collapsed(offset: code[i].length);
+    }
+
+    if (code.length >= _focusNodes.length) {
+      _focusNodes.last.requestFocus();
+    }
   }
 
   @override
