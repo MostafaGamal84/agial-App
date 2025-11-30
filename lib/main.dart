@@ -62,9 +62,9 @@ class MyApp extends StatelessWidget {
         colorScheme: colorScheme,
         scaffoldBackgroundColor: backgroundColor,
         useMaterial3: true,
-        textTheme: GoogleFonts.tajawalTextTheme()
+        textTheme: GoogleFonts.cairoTextTheme()
             .apply(bodyColor: Colors.white, displayColor: Colors.white),
-        fontFamily: GoogleFonts.tajawal().fontFamily,
+        fontFamily: GoogleFonts.cairo().fontFamily,
         appBarTheme: AppBarTheme(
           backgroundColor: surfaceColor,
           foregroundColor: colorScheme.onSurface,
