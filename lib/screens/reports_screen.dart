@@ -5,8 +5,6 @@ import '../controllers/auth_controller.dart';
 import '../controllers/report_controller.dart';
 import '../models/circle_report.dart';
 import '../models/user.dart';
-import '../services/report_service.dart';
-import '../widgets/report_filters.dart';
 import '../widgets/toast.dart';
 import 'login_screen.dart';
 import 'report_form_screen.dart';
@@ -29,8 +27,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final controller = context.read<ReportController>();
       final user = auth.currentUser;
       if (user != null) {
-        await controller.restoreFilter(user);
-        if (!mounted) return;
         await controller.refresh(user);
       }
     });
@@ -97,14 +93,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
       body: Column(
         children: [
-          ReportFilters(
-            currentUser: user,
-            reportService: context.read<ReportService>(),
-            initialFilter: controller.filter,
-            onChanged: (newFilter) {
-              controller.updateFilter(newFilter, user);
-            },
-          ),
           Expanded(
             child: controller.isLoading
                 ? const Center(child: CircularProgressIndicator.adaptive())
@@ -116,7 +104,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           SizedBox(height: 12),
                           Text('لا توجد تقارير بعد', style: TextStyle(fontSize: 16)),
                           SizedBox(height: 4),
-                          Text('جرّب تعديل المرشحات أو إضافة تقرير جديد',
+                          Text('يمكنك إضافة تقرير جديد من الزر أسفل اليمين',
                               style: TextStyle(color: Colors.black54)),
                         ],
                       )

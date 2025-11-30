@@ -1,6 +1,5 @@
 import '../models/circle.dart';
 import '../models/circle_report.dart';
-import '../models/report_filter.dart';
 import '../models/user.dart';
 import '../models/student.dart';
 import 'api_client.dart';
@@ -142,32 +141,14 @@ class ReportService {
   // GET ALL REPORTS (Teacher + Supervisor + Admin + BranchLeader)
   // ============================================================
   Future<List<ReportDisplayRow>> fetchReports({
-    required ReportFilter filter,
     required UserProfile currentUser,
   }) async {
     final query = <String, dynamic>{
       'SkipCount': 0,
       'MaxResultCount': 200,
+      // Always scope results to the logged-in teacher/user
+      'teacherId': currentUser.id,
     };
-
-    if (filter.searchTerm?.isNotEmpty == true) {
-      query['SearchTerm'] = filter.searchTerm;
-    }
-    if (filter.circleId != null) {
-      query['circleId'] = filter.circleId;
-    }
-    if (filter.studentId != null) {
-      query['studentId'] = filter.studentId;
-    }
-
-    // Teacher restriction
-    if (currentUser.isTeacher) {
-      query['teacherId'] = currentUser.id;
-    } else {
-      if (filter.teacherId != null) {
-        query['teacherId'] = filter.teacherId;
-      }
-    }
 
     final response =
         await _apiClient.get('/CircleReport/GetResultsByFilter', query: query);
