@@ -76,7 +76,7 @@ class _OTPScreenState extends State<OTPScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Image.asset(
-                        'assets/images/logo.jpg',
+                        'assets/images/favicon.ico',
                         height: 72,
                         fit: BoxFit.contain,
                       ),

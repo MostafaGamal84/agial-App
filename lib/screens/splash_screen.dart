@@ -24,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 3000),
     );
     _fadeAnimation = CurvedAnimation(
       parent: _controller,
@@ -100,7 +100,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ],
                   ),
                   child: Image.asset(
-                    'assets/images/logo.jpg',
+                    'assets/images/favicon.ico',
                     width: 140,
                     height: 140,
                     fit: BoxFit.contain,

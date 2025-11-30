@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           border: Border.all(color: Colors.white.withOpacity(0.12)),
                         ),
                         child: Image.asset(
-                          'assets/images/logo.jpg',
+                          'assets/images/favicon.ico',
                             width: 96,
                             height: 96,
                             fit: BoxFit.contain,
