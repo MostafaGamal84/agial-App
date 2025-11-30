@@ -34,17 +34,83 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+    const seedColor = Color(0xFF0E8E90);
+    const secondaryColor = Color(0xFFC3A56A);
+    const tertiaryColor = Color(0xFF0B8BC0);
+    const backgroundColor = Color(0xFF0F1622);
+    const surfaceColor = Color(0xFF172233);
+
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: Brightness.dark,
+    ).copyWith(
+      secondary: secondaryColor,
+      onSecondary: Colors.black87,
+      tertiary: tertiaryColor,
+      background: backgroundColor,
+      surface: surfaceColor,
+    );
+
     return MaterialApp(
       title: 'Ajyal Al-Quran Reports',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00695C)),
+        brightness: Brightness.dark,
+        colorScheme: colorScheme,
+        scaffoldBackgroundColor: backgroundColor,
         useMaterial3: true,
         textTheme: GoogleFonts.tajawalTextTheme(),
         fontFamily: GoogleFonts.tajawal().fontFamily,
-        inputDecorationTheme: const InputDecorationTheme(
+        appBarTheme: AppBarTheme(
+          backgroundColor: surfaceColor,
+          foregroundColor: colorScheme.onSurface,
+          elevation: 0,
+        ),
+        cardTheme: CardTheme(
+          color: surfaceColor,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.white.withOpacity(0.06)),
+          ),
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: secondaryColor,
+          foregroundColor: Colors.black87,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: seedColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: colorScheme.onSurface,
+            side: BorderSide(color: Colors.white.withOpacity(0.2)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          border: OutlineInputBorder(),
+          fillColor: const Color(0xFF1F2937),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.12)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.12)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: seedColor, width: 1.6),
+          ),
+          labelStyle: const TextStyle(color: Colors.white70),
         ),
       ),
       builder: (context, child) {

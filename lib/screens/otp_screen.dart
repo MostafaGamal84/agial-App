@@ -60,7 +60,7 @@ class _OTPScreenState extends State<OTPScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     return Scaffold(
-      backgroundColor: const Color(0xFF2D3337),
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -81,28 +81,26 @@ class _OTPScreenState extends State<OTPScreen> {
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'AJYAL AL-QURAN',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onBackground,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 32),
-                const Align(
+                Align(
                   alignment: Alignment.center,
                   child: Text(
                     'كود التحقق',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onBackground,
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -111,7 +109,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   child: Text(
                     'تم إرسال الرمز إلى ${widget.loginValue}',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.75),
+                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.75),
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
@@ -144,25 +142,29 @@ class _OTPScreenState extends State<OTPScreen> {
                                   textAlign: TextAlign.center,
                                   textDirection: TextDirection.ltr,
                                   keyboardType: TextInputType.number,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                   decoration: InputDecoration(
                                     filled: true,
-                                    fillColor: Colors.white,
+                                    fillColor: Theme.of(context).colorScheme.surface,
                                     contentPadding:
                                         const EdgeInsets.symmetric(vertical: 14),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          const BorderSide(color: Colors.white),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.2),
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                        color: Color.fromARGB(255, 0, 55, 173),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context).colorScheme.primary,
                                         width: 2,
                                       ),
                                     ),
@@ -191,26 +193,18 @@ class _OTPScreenState extends State<OTPScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Align(
+                Align(
                   alignment: Alignment.center,
                   child: Text(
                     'لم تتسلم كود؟ إعادة إرساله',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onBackground,
                       fontSize: 14,
                     ),
                   ),
                 ),
                 const Spacer(),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 44, 104, 243),
-                    foregroundColor: Colors.black,
-                    minimumSize: const Size.fromHeight(50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
                   onPressed: auth.isLoading
                       ? null
                       : () async {
