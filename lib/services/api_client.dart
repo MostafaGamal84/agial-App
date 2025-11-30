@@ -11,7 +11,7 @@ class ApiClient {
         baseUrl = baseUrl ??
             const String.fromEnvironment(
               'API_BASE_URL',
-              defaultValue: 'https://ajyalbackend.somee.com/api',
+              defaultValue: 'https://localhost:7260/api',
             );
 
   final http.Client _http;
