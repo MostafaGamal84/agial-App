@@ -32,9 +32,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const seedColor = Color(0xFF0E8E90);
+    final auth = context.watch<AuthController>();
+    const seedColor = Color(0xFF7C3AED);
     const secondaryColor = Color(0xFFC3A56A);
-    const tertiaryColor = Color(0xFF0B8BC0);
+    const tertiaryColor = Color(0xFF22C55E);
     const backgroundColor = Color(0xFF0F1622);
     const surfaceColor = Color(0xFF172233);
 
@@ -45,8 +46,12 @@ class MyApp extends StatelessWidget {
       secondary: secondaryColor,
       onSecondary: Colors.black87,
       tertiary: tertiaryColor,
+      onPrimary: Colors.white,
+      onTertiary: Colors.white,
       background: backgroundColor,
+      onBackground: Colors.white,
       surface: surfaceColor,
+      onSurface: Colors.white,
     );
 
     return MaterialApp(
