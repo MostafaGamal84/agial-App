@@ -38,6 +38,36 @@ class _ReportFiltersState extends State<ReportFilters> {
   List<Circle> circles = [];
   List<Student> students = [];
 
+  InputDecoration _fieldDecoration(
+    BuildContext context, {
+    required String label,
+    String? hint,
+  }) {
+    final theme = Theme.of(context);
+    final baseBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(
+        color: theme.colorScheme.outline.withOpacity(0.4),
+      ),
+    );
+
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      filled: true,
+      fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.35),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: baseBorder,
+      enabledBorder: baseBorder,
+      focusedBorder: baseBorder.copyWith(
+        borderSide: BorderSide(
+          color: theme.colorScheme.primary,
+          width: 1.5,
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -170,11 +200,10 @@ class _ReportFiltersState extends State<ReportFilters> {
                 DropdownButtonFormField<String>(
                   value: _selectedSupervisorId,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'المشرف',
-                    hintText: 'اختر المشرف',
-                    border: OutlineInputBorder(),
-                    filled: true,
+                  decoration: _fieldDecoration(
+                    context,
+                    label: 'المشرف',
+                    hint: 'اختر المشرف',
                   ),
                   items: supervisors
                       .map((sup) => DropdownMenuItem(value: sup.id, child: Text(sup.fullName)))
@@ -195,11 +224,10 @@ class _ReportFiltersState extends State<ReportFilters> {
                 DropdownButtonFormField<String>(
                   value: _selectedTeacherId,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'المعلم',
-                    hintText: 'اختر المعلم',
-                    border: OutlineInputBorder(),
-                    filled: true,
+                  decoration: _fieldDecoration(
+                    context,
+                    label: 'المعلم',
+                    hint: 'اختر المعلم',
                   ),
                   items: teachers
                       .map(
@@ -223,11 +251,10 @@ class _ReportFiltersState extends State<ReportFilters> {
               DropdownButtonFormField<String>(
                 value: _selectedCircleId,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'الحلقة',
-                  hintText: 'اختر الحلقة',
-                  border: OutlineInputBorder(),
-                  filled: true,
+                decoration: _fieldDecoration(
+                  context,
+                  label: 'الحلقة',
+                  hint: 'اختر الحلقة',
                 ),
                 items: circles
                     .map(
@@ -251,11 +278,10 @@ class _ReportFiltersState extends State<ReportFilters> {
               DropdownButtonFormField<String>(
                 value: _selectedStudentId,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'الطالب',
-                  hintText: 'اختر الطالب',
-                  border: OutlineInputBorder(),
-                  filled: true,
+                decoration: _fieldDecoration(
+                  context,
+                  label: 'الطالب',
+                  hint: 'اختر الطالب',
                 ),
                 items: students
                     .map(
