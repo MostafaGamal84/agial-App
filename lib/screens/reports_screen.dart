@@ -150,7 +150,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ],
           ),
         ),
-      ),
+      
     );
   }
 
@@ -270,7 +270,6 @@ class _ReportsDrawer extends StatelessWidget {
             ),
           ],
         ),
-      ),
       ),
     );
   }
