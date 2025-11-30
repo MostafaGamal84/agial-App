@@ -72,24 +72,14 @@ class _OTPScreenState extends State<OTPScreen> {
                 const SizedBox(height: 30),
                 Align(
                   alignment: Alignment.center,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/favicon.ico',
-                        height: 72,
-                        fit: BoxFit.contain,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'AJYAL AL-QURAN',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onBackground,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
-                      ),
-                    ],
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(36),
+                    child: Image.asset(
+                      'assets/images/favicon.ico',
+                      height: 72,
+                      width: 72,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 32),
