@@ -290,7 +290,7 @@ class _ReportCard extends StatelessWidget {
     }
   }
 
-  Widget _buildMetaRow(IconData icon, String label, String value) {
+  Widget _buildMetaRow(BuildContext context, IconData icon, String label, String value) {
     if (value.trim().isEmpty) return const SizedBox.shrink();
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,7 +319,7 @@ class _ReportCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       height: 1,
@@ -409,7 +409,7 @@ class _ReportCard extends StatelessWidget {
                 )
               ],
             ),
-            _buildDivider(),
+            _buildDivider(context),
             Wrap(
               spacing: 12,
               runSpacing: 6,
@@ -432,6 +432,7 @@ class _ReportCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: _buildMetaRow(
+                  context,
                   Icons.menu_book_outlined,
                   'الجديد',
                   '${report.newFrom ?? ''}${report.newFrom != null && report.newTo != null ? ' → ' : ''}${report.newTo ?? ''}',
@@ -441,6 +442,7 @@ class _ReportCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: _buildMetaRow(
+                  context,
                   Icons.history_toggle_off,
                   'القريب',
                   _combineText(report.recentPast, report.recentPastRate),
@@ -450,6 +452,7 @@ class _ReportCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: _buildMetaRow(
+                  context,
                   Icons.auto_stories_outlined,
                   'البعيد',
                   _combineText(report.distantPast, report.distantPastRate),
@@ -459,6 +462,7 @@ class _ReportCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: _buildMetaRow(
+                  context,
                   Icons.menu_book,
                   'الأبعد',
                   _combineText(report.farthestPast, report.farthestPastRate),
@@ -468,6 +472,7 @@ class _ReportCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: _buildMetaRow(
+                  context,
                   Icons.translate,
                   'غريب القرآن',
                   report.theWordsQuranStranger ?? '',
@@ -477,6 +482,7 @@ class _ReportCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: _buildMetaRow(
+                  context,
                   Icons.graphic_eq,
                   'التجويد',
                   report.intonation ?? '',
@@ -486,6 +492,7 @@ class _ReportCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: _buildMetaRow(
+                  context,
                   Icons.notes,
                   'ملاحظات',
                   report.other ?? '',
