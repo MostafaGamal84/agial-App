@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/circle_report.dart';
 import '../services/report_service.dart';
+import '../widgets/page_transition_wrapper.dart';
 
 class ReportDetailsScreen extends StatelessWidget {
   const ReportDetailsScreen({super.key, required this.row});
@@ -40,42 +41,43 @@ class ReportDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final report = row.report;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('تفاصيل التقرير'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              row.studentName.isEmpty
-                                  ? 'طالب غير معروف'
-                                  : row.studentName,
-                              style: Theme.of(context)
-                                  .textTheme
+    return PageTransitionWrapper(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('تفاصيل التقرير'),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 18,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                row.studentName.isEmpty
+                                    ? 'طالب غير معروف'
+                                    : row.studentName,
+                                style: Theme.of(context)
+                                    .textTheme
                                   .titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                           ),
@@ -182,7 +184,8 @@ class ReportDetailsScreen extends StatelessWidget {
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

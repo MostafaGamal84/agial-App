@@ -6,6 +6,7 @@ import '../controllers/auth_controller.dart';
 import '../controllers/report_controller.dart';
 import '../models/circle_report.dart';
 import '../models/user.dart';
+import '../widgets/page_transition_wrapper.dart';
 import '../widgets/toast.dart';
 import 'login_screen.dart';
 import 'report_details_screen.dart';
@@ -59,88 +60,96 @@ class _ReportsScreenState extends State<ReportsScreen> {
       return const LoginScreen();
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('تقارير الحلقات'),
-        actions: [
-          IconButton(
-            onPressed: () => _logout(auth),
-            icon: const Icon(Icons.logout),
-            tooltip: 'تسجيل الخروج',
-          )
-        ],
-      ),
-      drawer: _ReportsDrawer(
-        currentUser: user,
-        onLogout: () => _logout(auth),
-        onAddReport: () => _openReportForm(user),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openReportForm(user),
-        icon: const Icon(Icons.add),
-        label: const Text('إضافة تقرير'),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: controller.isLoading
-                ? const Center(child: CircularProgressIndicator.adaptive())
-                : controller.reports.isEmpty
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.insert_chart_outlined,
-                            size: 64,
-                            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.4),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text('لا توجد تقارير بعد', style: TextStyle(fontSize: 16)),
-                          const SizedBox(height: 4),
-                          Text(
-                            'يمكنك إضافة تقرير جديد من الزر أسفل اليمين',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
+    return PageTransitionWrapper(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('تقارير الحلقات'),
+          actions: [
+            IconButton(
+              onPressed: () => _logout(auth),
+              icon: const Icon(Icons.logout),
+              tooltip: 'تسجيل الخروج',
+            )
+          ],
+        ),
+        drawer: _ReportsDrawer(
+          currentUser: user,
+          onLogout: () => _logout(auth),
+          onAddReport: () => _openReportForm(user),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => _openReportForm(user),
+          icon: const Icon(Icons.add),
+          label: const Text('إضافة تقرير'),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: controller.isLoading
+                  ? const Center(child: CircularProgressIndicator.adaptive())
+                  : controller.reports.isEmpty
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.insert_chart_outlined,
+                              size: 64,
+                              color:
+                                  Theme.of(context).colorScheme.onBackground.withOpacity(0.4),
                             ),
-                          ),
-                        ],
-                      )
-                    : RefreshIndicator(
-                        onRefresh: () => controller.refresh(user),
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          itemBuilder: (context, index) {
-                            final row = controller.reports[index];
-                            return _ReportCard(
-                              row: row,
-                              onEdit: () async {
-                                final result = await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => ReportFormScreen(
-                                      currentUser: user,
-                                      existingReport: row.report,
-                                    ),
-                                  ),
-                                );
-                                if (!mounted) return;
-                                if (result is String && result.isNotEmpty) {
-                                  showToast(context, result);
-                                }
-                                controller.refresh(user);
-                              },
-                              onView: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ReportDetailsScreen(row: row),
-                                ),
+                            const SizedBox(height: 12),
+                            const Text('لا توجد تقارير بعد', style: TextStyle(fontSize: 16)),
+                            const SizedBox(height: 4),
+                            Text(
+                              'يمكنك إضافة تقرير جديد من الزر أسفل اليمين',
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onBackground
+                                    .withOpacity(0.6),
                               ),
-                            );
-                          },
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
-                          itemCount: controller.reports.length,
+                            ),
+                          ],
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () => controller.refresh(user),
+                          child: ListView.separated(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            itemBuilder: (context, index) {
+                              final row = controller.reports[index];
+                              return _ReportCard(
+                                row: row,
+                                onEdit: () async {
+                                  final result = await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ReportFormScreen(
+                                        currentUser: user,
+                                        existingReport: row.report,
+                                      ),
+                                    ),
+                                  );
+                                  if (!mounted) return;
+                                  if (result is String && result.isNotEmpty) {
+                                    showToast(context, result);
+                                  }
+                                  controller.refresh(user);
+                                },
+                                onView: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ReportDetailsScreen(row: row),
+                                  ),
+                                ),
+                              );
+                            },
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemCount: controller.reports.length,
+                          ),
                         ),
-                      ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -261,6 +270,7 @@ class _ReportsDrawer extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
