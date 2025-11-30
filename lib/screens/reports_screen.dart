@@ -9,6 +9,7 @@ import '../services/report_service.dart';
 import '../widgets/report_filters.dart';
 import '../widgets/toast.dart';
 import 'login_screen.dart';
+import 'report_details_screen.dart';
 import 'report_form_screen.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -66,32 +67,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
         title: const Text('تقارير الحلقات'),
         actions: [
           IconButton(
-            onPressed: () async {
-              await auth.logout();
-              if (!mounted) return;
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (_) => false,
-              );
-            },
+            onPressed: () => _logout(auth),
             icon: const Icon(Icons.logout),
             tooltip: 'تسجيل الخروج',
           )
         ],
       ),
+      drawer: _ReportsDrawer(
+        currentUser: user,
+        onLogout: () => _logout(auth),
+        onAddReport: () => _openReportForm(user),
+      ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ReportFormScreen(currentUser: user),
-            ),
-          );
-          if (!mounted) return;
-          if (result is String && result.isNotEmpty) {
-            showToast(context, result);
-          }
-          controller.refresh(user);
-        },
+        onPressed: () => _openReportForm(user),
         icon: const Icon(Icons.add),
         label: const Text('إضافة تقرير'),
       ),
@@ -143,6 +131,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 }
                                 controller.refresh(user);
                               },
+                              onView: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ReportDetailsScreen(row: row),
+                                ),
+                              ),
                             );
                           },
                           separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -154,13 +147,134 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
     );
   }
+
+  Future<void> _logout(AuthController auth) async {
+    await auth.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+  }
+
+  Future<void> _openReportForm(UserProfile user) async {
+    final controller = context.read<ReportController>();
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ReportFormScreen(currentUser: user),
+      ),
+    );
+    if (!mounted) return;
+    if (result is String && result.isNotEmpty) {
+      showToast(context, result);
+    }
+    controller.refresh(user);
+  }
+}
+
+class _ReportsDrawer extends StatelessWidget {
+  const _ReportsDrawer({
+    required this.currentUser,
+    required this.onAddReport,
+    required this.onLogout,
+  });
+
+  final UserProfile currentUser;
+  final VoidCallback onAddReport;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'تطبيق تقارير الحلقات',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const CircleAvatar(
+                        child: Icon(Icons.person_outline),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              currentUser.fullName.isEmpty
+                                  ? 'مستخدم غير معروف'
+                                  : currentUser.fullName,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            Text(
+                              currentUser.userType.label,
+                              style: TextStyle(color: Colors.grey.shade700),
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.list_alt),
+              title: const Text('عرض التقارير'),
+              onTap: () => Navigator.of(context).pop(),
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_circle_outline),
+              title: const Text('إضافة تقرير'),
+              onTap: () async {
+                Navigator.of(context).pop();
+                await Future<void>.delayed(const Duration(milliseconds: 200));
+                onAddReport();
+              },
+            ),
+            const Spacer(),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('تسجيل الخروج'),
+              onTap: () async {
+                Navigator.of(context).pop();
+                await Future<void>.delayed(const Duration(milliseconds: 200));
+                onLogout();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ReportCard extends StatelessWidget {
-  const _ReportCard({required this.row, required this.onEdit});
+  const _ReportCard({required this.row, required this.onEdit, required this.onView});
 
   final ReportDisplayRow row;
   final VoidCallback onEdit;
+  final VoidCallback onView;
 
   String _formatDate(DateTime date) {
     final local = date.toLocal();
@@ -353,13 +467,23 @@ class _ReportCard extends StatelessWidget {
                   'ملاحظات',
                   report.other ?? '',
                 ),
-              ),
+            ),
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: onEdit,
-                icon: const Icon(Icons.edit_outlined),
-                label: const Text('تعديل التقرير'),
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  TextButton.icon(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('تعديل التقرير'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onView,
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: const Text('عرض التفاصيل'),
+                  ),
+                ],
               ),
             ),
           ],
