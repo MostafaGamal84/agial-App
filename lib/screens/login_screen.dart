@@ -38,34 +38,14 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white.withOpacity(0.06)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.45),
-                          blurRadius: 26,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(18),
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.06),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.white.withOpacity(0.12)),
-                        ),
-                        child: Image.asset(
-                          'assets/images/favicon.ico',
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.contain,
-                        ),
+                  Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(48),
+                      child: Image.asset(
+                        'assets/images/favicon.ico',
+                        width: 96,
+                        height: 96,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
