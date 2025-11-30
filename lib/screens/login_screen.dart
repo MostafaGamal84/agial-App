@@ -52,57 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     padding: const EdgeInsets.all(18),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: const [
-                              Text(
-                                'أجيال القرآن',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              
-                              SizedBox(height: 14),
-                              Wrap(
-                                alignment: WrapAlignment.end,
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  _HeaderBadge(
-                                    backgroundColor: Color(0xFF1e2b3f),
-                                    child: Text(
-                                      'اللقاء الدوري لمشرفي ومشرفات البيانات',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ),
-                                  _HeaderBadge(
-                                    backgroundColor: Color(0xFF1e2b3f),
-                                    child: Text(
-                                      'المجلس الفرعي بمنطقة مكة المكرمة\nإدارة حلقات شرق مكة',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.06),
                           borderRadius: BorderRadius.circular(14),
@@ -110,12 +62,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: Image.asset(
                           'assets/images/favicon.ico',
-                            width: 96,
-                            height: 96,
-                            fit: BoxFit.contain,
-                          ),
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.contain,
                         ),
-                      ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 28),
