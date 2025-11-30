@@ -62,6 +62,32 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
   bool get isEditing => widget.existingReport != null;
 
+  InputDecoration _inputDecoration(String label, {String? hint}) {
+    final theme = Theme.of(context);
+    final baseBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(
+        color: theme.colorScheme.outline.withOpacity(0.4),
+      ),
+    );
+
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      filled: true,
+      fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: baseBorder,
+      enabledBorder: baseBorder,
+      focusedBorder: baseBorder.copyWith(
+        borderSide: BorderSide(
+          color: theme.colorScheme.primary,
+          width: 1.5,
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -427,10 +453,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         key: ValueKey('supervisor-${user.id}-${supervisors.length}'),
         value: value,
         isExpanded: true,
-        decoration: const InputDecoration(
-          labelText: 'المشرف',
-          border: OutlineInputBorder(),
-        ),
+        decoration: _inputDecoration('المشرف'),
         items: supervisors
             .map(
               (s) => DropdownMenuItem<String>(
@@ -464,10 +487,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         key: ValueKey('teacher-${_selectedSupervisorId ?? 'none'}-${teachers.length}'),
         value: value,
         isExpanded: true,
-        decoration: const InputDecoration(
-          labelText: 'المعلم',
-          border: OutlineInputBorder(),
-        ),
+        decoration: _inputDecoration('المعلم'),
         items: teachers
             .map(
               (t) => DropdownMenuItem<String>(
@@ -495,10 +515,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         key: ValueKey('circle-${_selectedTeacherId ?? 'none'}-${circles.length}'),
         value: value,
         isExpanded: true,
-        decoration: const InputDecoration(
-          labelText: 'الحلقة',
-          border: OutlineInputBorder(),
-        ),
+        decoration: _inputDecoration('الحلقة'),
         items: circles
             .map(
               (c) => DropdownMenuItem<String>(
@@ -540,10 +557,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             'student-${_selectedCircle?.id ?? 'none'}-${uniqueStudents.length}'),
         value: value,
         isExpanded: true,
-        decoration: const InputDecoration(
-          labelText: 'الطالب',
-          border: OutlineInputBorder(),
-        ),
+        decoration: _inputDecoration('الطالب'),
         items: uniqueStudents
             .map(
               (s) => DropdownMenuItem<int>(
@@ -569,10 +583,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   Widget _buildStatusDropdown() {
     return DropdownButtonFormField<AttendStatus>(
       value: _status,
-      decoration: const InputDecoration(
-        labelText: 'الحالة',
-        border: OutlineInputBorder(),
-      ),
+      decoration: _inputDecoration('الحالة'),
       items: AttendStatus.values
           .map(
             (st) => DropdownMenuItem<AttendStatus>(
@@ -614,10 +625,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return TextFormField(
       controller: _minutesController,
       keyboardType: TextInputType.number,
-      decoration: const InputDecoration(
-        labelText: 'عدد الدقائق',
-        border: OutlineInputBorder(),
-      ),
+      decoration: _inputDecoration('عدد الدقائق'),
     );
   }
 
@@ -625,10 +633,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return DropdownButtonFormField<int>(
       value: _selectedSurahNumber,
       isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'السورة الجديدة',
-        border: OutlineInputBorder(),
-      ),
+      decoration: _inputDecoration('السورة الجديدة'),
       items: QuranSurah.values
           .map(
             (s) => DropdownMenuItem<int>(
@@ -678,10 +683,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
+      decoration: _inputDecoration(label),
     );
   }
 
