@@ -7,6 +7,7 @@ import '../models/student.dart';
 import '../models/user.dart';
 import '../models/quran_surah.dart';
 import '../services/report_service.dart';
+import '../widgets/page_transition_wrapper.dart';
 import '../widgets/toast.dart';
 
 class ReportFormScreen extends StatefulWidget {
@@ -381,21 +382,23 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   Widget build(BuildContext context) {
     final reportService = context.read<ReportService>();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'تعديل التقرير' : 'إضافة تقرير'),
-      ),
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator.adaptive())
-            : _error != null
-                ? Center(
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  )
-                : _buildForm(reportService),
+    return PageTransitionWrapper(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isEditing ? 'تعديل التقرير' : 'إضافة تقرير'),
+        ),
+        body: SafeArea(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator.adaptive())
+              : _error != null
+                  ? Center(
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    )
+                  : _buildForm(reportService),
+        ),
       ),
     );
   }
