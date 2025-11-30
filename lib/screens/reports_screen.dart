@@ -88,13 +88,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 : controller.reports.isEmpty
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.insert_chart_outlined, size: 64, color: Colors.black38),
-                          SizedBox(height: 12),
-                          Text('لا توجد تقارير بعد', style: TextStyle(fontSize: 16)),
-                          SizedBox(height: 4),
-                          Text('يمكنك إضافة تقرير جديد من الزر أسفل اليمين',
-                              style: TextStyle(color: Colors.black54)),
+                        children: [
+                          Icon(
+                            Icons.insert_chart_outlined,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.4),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text('لا توجد تقارير بعد', style: TextStyle(fontSize: 16)),
+                          const SizedBox(height: 4),
+                          Text(
+                            'يمكنك إضافة تقرير جديد من الزر أسفل اليمين',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
+                            ),
+                          ),
                         ],
                       )
                     : RefreshIndicator(
@@ -274,11 +282,11 @@ class _ReportCard extends StatelessWidget {
   Color _statusColor(AttendStatus status) {
     switch (status) {
       case AttendStatus.attended:
-        return Colors.green.shade600;
+        return const Color(0xFF22C55E);
       case AttendStatus.ExcusedAbsence:
-        return Colors.orange.shade700;
+        return const Color(0xFFf59e0b);
       case AttendStatus.UnexcusedAbsence:
-        return Colors.red.shade700;
+        return const Color(0xFFef4444);
     }
   }
 
@@ -287,12 +295,19 @@ class _ReportCard extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: Colors.grey.shade600),
+        Icon(
+          icon,
+          size: 18,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        ),
         const SizedBox(width: 6),
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: const TextStyle(color: Colors.black87, height: 1.4),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.4,
+              ),
               children: [
                 TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
                 TextSpan(text: value),
@@ -308,7 +323,7 @@ class _ReportCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       height: 1,
-      color: Colors.grey.shade200,
+      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
     );
   }
 
@@ -321,16 +336,16 @@ class _ReportCard extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
         ],
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -345,10 +360,24 @@ class _ReportCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(studentName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          )),
                       const SizedBox(height: 4),
-                      Text(circleName, style: TextStyle(color: Colors.grey.shade700)),
-                      Text(teacherName, style: TextStyle(color: Colors.grey.shade700)),
+                      Text(
+                        circleName,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                      Text(
+                        teacherName,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -356,10 +385,10 @@ class _ReportCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      decoration: BoxDecoration(
-                        color: _statusColor(report.attendStatueId).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                        decoration: BoxDecoration(
+                          color: _statusColor(report.attendStatueId).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       child: Text(
                         report.attendStatueId.label,
@@ -370,7 +399,12 @@ class _ReportCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(_formatDate(report.creationTime), style: TextStyle(color: Colors.grey.shade600)),
+                    Text(
+                      _formatDate(report.creationTime),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
+                      ),
+                    ),
                   ],
                 )
               ],
@@ -384,13 +418,13 @@ class _ReportCard extends StatelessWidget {
                   Chip(
                     avatar: const Icon(Icons.timer_outlined, size: 18),
                     label: Text('${report.minutes} دقيقة'),
-                    backgroundColor: Colors.grey.shade100,
+                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12),
                   ),
                 if (report.newId != null)
                   Chip(
                     avatar: const Icon(Icons.bookmark_border, size: 18),
                     label: Text('الجزء الجديد رقم ${report.newId}'),
-                    backgroundColor: Colors.grey.shade100,
+                    backgroundColor: Theme.of(context).colorScheme.tertiary.withOpacity(0.12),
                   ),
               ],
             ),

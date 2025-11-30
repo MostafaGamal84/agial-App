@@ -11,11 +11,11 @@ class ReportDetailsScreen extends StatelessWidget {
   Color _statusColor(AttendStatus status) {
     switch (status) {
       case AttendStatus.attended:
-        return Colors.green.shade600;
+        return const Color(0xFF22C55E);
       case AttendStatus.ExcusedAbsence:
-        return Colors.orange.shade700;
+        return const Color(0xFFf59e0b);
       case AttendStatus.UnexcusedAbsence:
-        return Colors.red.shade700;
+        return const Color(0xFFef4444);
     }
   }
 
@@ -53,9 +53,9 @@ class ReportDetailsScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 6),
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
@@ -78,15 +78,25 @@ class ReportDetailsScreen extends StatelessWidget {
                                   .textTheme
                                   .titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            row.circleName.isEmpty ? 'حلقة غير معروفة' : row.circleName,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                             ),
-                            const SizedBox(height: 4),
-                            Text(row.circleName.isEmpty ? 'حلقة غير معروفة' : row.circleName),
-                            Text(row.teacherName.isEmpty ? 'معلم غير معروف' : row.teacherName),
-                          ],
-                        ),
+                          ),
+                          Text(
+                            row.teacherName.isEmpty ? 'معلم غير معروف' : row.teacherName,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Container(
                             decoration: BoxDecoration(
@@ -105,7 +115,9 @@ class ReportDetailsScreen extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             _formatDate(report.creationTime),
-                            style: TextStyle(color: Colors.grey.shade600),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
+                            ),
                           ),
                         ],
                       )
@@ -120,13 +132,13 @@ class ReportDetailsScreen extends StatelessWidget {
                         Chip(
                           avatar: const Icon(Icons.timer_outlined, size: 18),
                           label: Text('${report.minutes} دقيقة'),
-                          backgroundColor: Colors.grey.shade100,
+                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12),
                         ),
                       if (report.newId != null)
                         Chip(
                           avatar: const Icon(Icons.bookmark_border, size: 18),
                           label: Text('الجزء الجديد رقم ${report.newId}'),
-                          backgroundColor: Colors.grey.shade100,
+                          backgroundColor: Theme.of(context).colorScheme.tertiary.withOpacity(0.12),
                         ),
                     ],
                   ),

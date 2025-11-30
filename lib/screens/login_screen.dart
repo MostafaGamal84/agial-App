@@ -28,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     return Scaffold(
-      backgroundColor: const Color(0xFF0e111a),
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -40,13 +40,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF111827),
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      border: Border.all(color: Colors.white.withOpacity(0.06)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.35),
-                          blurRadius: 20,
+                          color: Colors.black.withOpacity(0.45),
+                          blurRadius: 26,
                           offset: const Offset(0, 10),
                         ),
                       ],
@@ -62,7 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               Text(
                                 'أجيال القرآن',
                                 style: TextStyle(
-                                  color: Colors.white,
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -75,24 +74,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                 runSpacing: 10,
                                 children: [
                                   _HeaderBadge(
-                                    backgroundColor: Color(0xFF1c2434),
+                                    backgroundColor: Color(0xFF1e2b3f),
                                     child: Text(
                                       'اللقاء الدوري لمشرفي ومشرفات البيانات',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        color: Colors.white,
                                         fontSize: 11,
                                         height: 1.4,
                                       ),
                                     ),
                                   ),
                                   _HeaderBadge(
-                                    backgroundColor: Color(0xFF1c2434),
+                                    backgroundColor: Color(0xFF1e2b3f),
                                     child: Text(
                                       'المجلس الفرعي بمنطقة مكة المكرمة\nإدارة حلقات شرق مكة',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        color: Colors.white,
                                         fontSize: 11,
                                         height: 1.4,
                                       ),
@@ -106,13 +103,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(width: 16),
                         Container(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.04),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.white.withOpacity(0.08)),
-                          ),
-                          child: Image.asset(
-                            'assets/images/logo.jpg',
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white.withOpacity(0.12)),
+                        ),
+                        child: Image.asset(
+                          'assets/images/logo.jpg',
                             width: 96,
                             height: 96,
                             fit: BoxFit.contain,
@@ -130,7 +127,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           'أهلاً بعودتك',
                           style: TextStyle(
-                            color: Colors.white,
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                           ),
@@ -139,7 +135,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           'أدخل بياناتك لتسجيل الدخول إلى حسابك',
                           style: TextStyle(
-                            color: Colors.white70,
                             fontSize: 14,
                           ),
                         ),
@@ -169,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextButton(
                       onPressed: () {},
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF00a99d),
+                        foregroundColor: Theme.of(context).colorScheme.tertiary,
                         padding: EdgeInsets.zero,
                       ),
                       child: const Text('نسيت كلمة المرور'),
@@ -177,14 +172,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00a99d),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
                     onPressed: auth.isLoading
                         ? null
                         : () async {
