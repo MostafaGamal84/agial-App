@@ -16,6 +16,7 @@ class AuthController extends ChangeNotifier {
   bool codeSent = false;
 
   UserProfile? get currentUser => _authService.currentUser;
+  String? get pendingOtpCode => _authService.pendingOtpCode;
 
   Future<void> _restoreSession() async {
     await _authService.restoreSession();

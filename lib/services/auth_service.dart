@@ -19,11 +19,13 @@ class AuthService {
   static const _userKey = 'auth_user';
 
   String? _pendingLogin;
+  String? _pendingOtpCode;
   UserProfile? _currentUser;
   String? _token;
 
   UserProfile? get currentUser => _currentUser;
   String? get token => _token;
+  String? get pendingOtpCode => _pendingOtpCode;
 
   // ============================
   // RESTORE SESSION
@@ -45,6 +47,7 @@ class AuthService {
   // LOGIN (step 1)
   // ============================
   Future<void> login(String login, {String? password}) async {
+    _pendingOtpCode = null;
     final payload = {
       'email': login,
       if (password != null) 'password': password,
@@ -58,6 +61,7 @@ class AuthService {
 
     // لو عندك OTP: نخزن الإيميل مؤقتًا
     _pendingLogin = login;
+    _pendingOtpCode = _extractOtpCode(response);
 
     // لو مستقبلاً حبيت تلغي الـ OTP وتاخد الـ token مباشرة من Login
     // تقدر تعدل هنا وتستدعي _extractUserProfile(response['data']) مباشرة.
@@ -97,6 +101,7 @@ class AuthService {
     _currentUser = profile;
     _token = token;
     _pendingLogin = null;
+    _pendingOtpCode = null;
 
     _apiClient.updateToken(_token);
 
@@ -112,6 +117,7 @@ class AuthService {
     _currentUser = null;
     _token = null;
     _pendingLogin = null;
+    _pendingOtpCode = null;
 
     _apiClient.updateToken(null);
 
@@ -163,6 +169,14 @@ class AuthService {
     if (result is Map<String, dynamic>) return result;
 
     throw Exception('استجابة غير متوقعة من الخادم');
+  }
+
+  String? _extractOtpCode(Map<String, dynamic> response) {
+    final result = response['data'] ?? response['result'];
+    if (result is Map<String, dynamic> && result['code'] != null) {
+      return result['code'].toString();
+    }
+    return null;
   }
 
   // ===================================================
