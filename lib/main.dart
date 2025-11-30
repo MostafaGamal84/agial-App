@@ -4,8 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'controllers/auth_controller.dart';
 import 'controllers/report_controller.dart';
-import 'screens/login_screen.dart';
-import 'screens/reports_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/report_service.dart';
@@ -33,7 +32,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthController>();
     const seedColor = Color(0xFF0E8E90);
     const secondaryColor = Color(0xFFC3A56A);
     const tertiaryColor = Color(0xFF0B8BC0);
@@ -119,13 +117,7 @@ class MyApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: auth.isRestoring
-          ? const Scaffold(
-              body: Center(child: CircularProgressIndicator.adaptive()),
-            )
-          : auth.currentUser == null
-              ? const LoginScreen()
-              : const ReportsScreen(),
+      home: const SplashScreen(),
     );
   }
 }
