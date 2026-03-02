@@ -1,200 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../models/circle_report.dart';
+import '../models/user.dart';
 import '../services/report_service.dart';
+import '../utils/report_helpers.dart';
 import '../widgets/page_transition_wrapper.dart';
+import '../widgets/toast.dart';
+import 'report_form_screen.dart';
 
-class ReportDetailsScreen extends StatelessWidget {
-  const ReportDetailsScreen({super.key, required this.row});
+class ReportDetailsScreen extends StatefulWidget {
+  const ReportDetailsScreen({super.key, required this.row, required this.currentUser});
 
   final ReportDisplayRow row;
+  final UserProfile currentUser;
 
-  Color _statusColor(AttendStatus status) {
-    switch (status) {
-      case AttendStatus.attended:
-        return const Color(0xFF22C55E);
-      case AttendStatus.ExcusedAbsence:
-        return const Color(0xFFf59e0b);
-      case AttendStatus.UnexcusedAbsence:
-        return const Color(0xFFef4444);
-    }
-  }
+  @override
+  State<ReportDetailsScreen> createState() => _ReportDetailsScreenState();
+}
 
-  String _formatDate(DateTime date) {
-    final local = date.toLocal();
-    final twoDigits = (int value) => value.toString().padLeft(2, '0');
-    return '${local.year}/${twoDigits(local.month)}/${twoDigits(local.day)}';
-  }
-
-  Widget _metaTile(String label, String? value, {IconData? icon}) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) return const SizedBox.shrink();
-    return ListTile(
-      dense: true,
-      leading: icon != null ? Icon(icon) : null,
-      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(text),
-    );
-  }
+class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
+  bool isDeleting = false;
 
   @override
   Widget build(BuildContext context) {
+    final row = widget.row;
     final report = row.report;
+    final canEdit = !widget.currentUser.isStudent && report.id.isNotEmpty;
 
     return PageTransitionWrapper(
       child: Scaffold(
         appBar: AppBar(
           title: const Text('تفاصيل التقرير'),
+          actions: [
+            if (canEdit) ...[
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReportFormScreen(currentUser: widget.currentUser, existingReport: report))),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: isDeleting ? null : _delete,
+              )
+            ]
+          ],
         ),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 18,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                row.studentName.isEmpty
-                                    ? 'طالب غير معروف'
-                                    : row.studentName,
-                                style: Theme.of(context)
-                                    .textTheme
-                                  .titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            row.circleName.isEmpty ? 'حلقة غير معروفة' : row.circleName,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                            ),
-                          ),
-                          Text(
-                            row.teacherName.isEmpty ? 'معلم غير معروف' : row.teacherName,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: _statusColor(report.attendStatueId).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            child: Text(
-                              report.attendStatueId.label,
-                              style: TextStyle(
-                                color: _statusColor(report.attendStatueId),
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _formatDate(report.creationTime),
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 6,
-                    children: [
-                      if (report.minutes != null)
-                        Chip(
-                          avatar: const Icon(Icons.timer_outlined, size: 18),
-                          label: Text('${report.minutes} دقيقة'),
-                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                        ),
-                      if (report.newId != null)
-                        Chip(
-                          avatar: const Icon(Icons.bookmark_border, size: 18),
-                          label: Text('الجزء الجديد رقم ${report.newId}'),
-                          backgroundColor: Theme.of(context).colorScheme.tertiary.withOpacity(0.12),
-                        ),
-                    ],
-                  ),
-                  const Divider(height: 28),
-                  _metaTile(
-                    'الجديد',
-                    '${report.newFrom ?? ''}${report.newFrom != null && report.newTo != null ? ' → ' : ''}${report.newTo ?? ''}',
-                    icon: Icons.menu_book_outlined,
-                  ),
-                  _metaTile(
-                    'القريب',
-                    _combineText(report.recentPast, report.recentPastRate),
-                    icon: Icons.history_toggle_off,
-                  ),
-                  _metaTile(
-                    'البعيد',
-                    _combineText(report.distantPast, report.distantPastRate),
-                    icon: Icons.auto_stories_outlined,
-                  ),
-                  _metaTile(
-                    'الأبعد',
-                    _combineText(report.farthestPast, report.farthestPastRate),
-                    icon: Icons.menu_book,
-                  ),
-                  _metaTile(
-                    'غريب القرآن',
-                    report.theWordsQuranStranger,
-                    icon: Icons.translate,
-                  ),
-                  _metaTile(
-                    'التجويد',
-                    report.intonation,
-                    icon: Icons.graphic_eq,
-                  ),
-                  _metaTile(
-                    'ملاحظات',
-                    report.other,
-                    icon: Icons.notes,
-                  ),
-                ],
-              ),
-            ),
-          ),
+            ListTile(title: const Text('البيانات العامة', style: TextStyle(fontWeight: FontWeight.bold))),
+            _item('الطالب', getStudentName(row)),
+            _item('الحلقة', getCircleName(row)),
+            _item('المعلم', getTeacherName(row)),
+            _item('الحالة', getStatusLabel(report.attendStatueId)),
+            _item('الدقائق', displayValue(report.minutes)),
+            _item('وقت الإنشاء', formatDate(report.creationTime)),
+            const Divider(),
+            ListTile(title: const Text('الدرس الجديد', style: TextStyle(fontWeight: FontWeight.bold))),
+            _item('السورة الجديدة', resolveSurahName(report.newId)),
+            _item('الجديد من', displayValue(report.newFrom)),
+            _item('الجديد إلى', displayValue(report.newTo)),
+            _item('التقييم العام', displayValue(report.newRate)),
+            const Divider(),
+            ListTile(title: const Text('المراجعة', style: TextStyle(fontWeight: FontWeight.bold))),
+            _item('الماضي القريب', displayValue(report.recentPast)),
+            _item('الماضي البعيد', displayValue(report.distantPast)),
+            _item('الأبعد', displayValue(report.farthestPast)),
+            const Divider(),
+            ListTile(title: const Text('ملاحظات إضافية', style: TextStyle(fontWeight: FontWeight.bold))),
+            _item('غريب القرآن', displayValue(report.theWordsQuranStranger)),
+            _item('التجويد', displayValue(report.intonation)),
           ],
         ),
       ),
     );
   }
 
-  String _combineText(String? value, String? rate) {
-    final parts = [value, rate]
-        .where((element) => element != null && element!.trim().isNotEmpty)
-        .map((e) => e!.trim())
-        .toList();
-    return parts.join(' — ');
+  Widget _item(String k, String v) => ListTile(title: Text(k), subtitle: Text(v));
+
+  Future<void> _delete() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('حذف التقرير'),
+        content: const Text('هل انت متاكد من حذف التقرير؟'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Yes')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => isDeleting = true);
+    try {
+      await context.read<ReportService>().deleteReport(widget.row.report.id);
+      if (mounted) {
+        showToast(context, 'تم حذف التقرير');
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) showToast(context, e.toString(), isError: true);
+    }
+    if (mounted) setState(() => isDeleting = false);
   }
 }

@@ -4,7 +4,8 @@ enum UserType {
   admin('1', 'System Admin'),
   branchLeader('2', 'Branch Manager'),
   manager('3', 'Supervisor'),
-  teacher('4', 'Teacher');
+  teacher('4', 'Teacher'),
+  student('5', 'Student');
 
   final String id;
   final String label;
@@ -21,6 +22,8 @@ enum UserType {
         return UserType.manager;
       case '4':
         return UserType.teacher;
+      case '5':
+        return UserType.student;
       default:
         return UserType.teacher;
     }
@@ -47,6 +50,7 @@ class UserProfile {
   bool get isBranchLeader => userType == UserType.branchLeader;
   bool get isManager => userType == UserType.manager;
   bool get isTeacher => userType == UserType.teacher;
+  bool get isStudent => userType == UserType.student;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     // ⚠️ هنا التعديل المهم:
