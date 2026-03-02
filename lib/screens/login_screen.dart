@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
 import '../widgets/page_transition_wrapper.dart';
-import 'otp_screen.dart';
 import '../widgets/toast.dart';
+import 'reports_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? null
                           : () async {
                               if (!_formKey.currentState!.validate()) return;
-                              await auth.login(
+                              final user = await auth.login(
                                 _loginController.text,
                                 password: _passwordController.text,
                               );
@@ -122,18 +122,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                 );
                                 return;
                               }
-                              if (auth.codeSent) {
+                              if (user != null) {
                                 showToast(
                                   context,
-                                  'تم إرسال رمز التحقق بنجاح',
+                                  'تم تسجيل الدخول بنجاح',
                                 );
-                                Navigator.of(context).push(
+                                Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
-                                    builder: (_) => OTPScreen(
-                                      loginValue: _loginController.text,
-                                      initialCode: auth.pendingOtpCode,
-                                    ),
+                                    builder: (_) => const ReportsScreen(),
                                   ),
+                                  (route) => false,
                                 );
                               }
                             },

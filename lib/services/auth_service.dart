@@ -46,7 +46,7 @@ class AuthService {
   // ============================
   // LOGIN (step 1)
   // ============================
-  Future<void> login(String login, {String? password}) async {
+  Future<UserProfile> login(String login, {String? password}) async {
     _pendingOtpCode = null;
     final payload = {
       'email': login,
@@ -59,12 +59,25 @@ class AuthService {
       throw Exception(_extractError(response) ?? 'تعذر بدء تسجيل الدخول');
     }
 
-    // لو عندك OTP: نخزن الإيميل مؤقتًا
-    _pendingLogin = login;
-    _pendingOtpCode = _extractOtpCode(response);
+    final result = _extractResultMap(response);
+    final token = result['accessToken']?.toString() ??
+        result['token']?.toString();
 
-    // لو مستقبلاً حبيت تلغي الـ OTP وتاخد الـ token مباشرة من Login
-    // تقدر تعدل هنا وتستدعي _extractUserProfile(response['data']) مباشرة.
+    if (token == null || token.isEmpty) {
+      throw Exception('تعذر استلام رمز الدخول من الخادم');
+    }
+
+    final profile = _extractUserProfile(result);
+
+    _currentUser = profile;
+    _token = token;
+    _pendingLogin = null;
+    _pendingOtpCode = null;
+
+    _apiClient.updateToken(_token);
+    await _persistSession();
+
+    return profile;
   }
 
   // ============================
@@ -158,7 +171,11 @@ class AuthService {
 
     final errors = response['errors'];
     if (errors is List && errors.isNotEmpty) {
-      return errors.first.toString();
+      final firstError = errors.first;
+      if (firstError is Map<String, dynamic>) {
+        return firstError['message']?.toString() ?? firstError.toString();
+      }
+      return firstError.toString();
     }
 
     return null;
