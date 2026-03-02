@@ -10,9 +10,9 @@ enum AttendStatus {
       case AttendStatus.attended:
         return 'حضر';
       case AttendStatus.ExcusedAbsence:
-        return 'تغيب بعذر';
+        return 'غياب بعذر';
       case AttendStatus.UnexcusedAbsence:
-        return 'تغيب بدون عذر';
+        return 'غياب بدون عذر';
     }
   }
 
@@ -62,6 +62,9 @@ class CircleReport {
   final String? intonation;
   final String? theWordsQuranStranger;
   final String? other;
+  final String? generalRate;
+  final bool? isVisual;
+  final String? nextCircleOrder;
 
   CircleReport({
     required this.id,
@@ -85,6 +88,9 @@ class CircleReport {
     required this.theWordsQuranStranger,
     required this.intonation,
     required this.other,
+    required this.generalRate,
+    required this.isVisual,
+    required this.nextCircleOrder,
   });
 
   factory CircleReport.fromApi(Map<String, dynamic> json) {
@@ -119,6 +125,9 @@ class CircleReport {
       theWordsQuranStranger: json['theWordsQuranStranger']?.toString(),
       intonation: json['intonation']?.toString(),
       other: json['other']?.toString(),
+      generalRate: json['generalRate']?.toString() ?? json['newRate']?.toString(),
+      isVisual: json['isVisual'] as bool?,
+      nextCircleOrder: json['nextCircleOrder']?.toString(),
     );
   }
 
@@ -144,6 +153,9 @@ class CircleReport {
     String? intonation,
     String? theWordsQuranStranger,
     String? other,
+    String? generalRate,
+    bool? isVisual,
+    String? nextCircleOrder,
   }) {
     return CircleReport(
       id: id ?? this.id,
@@ -167,6 +179,9 @@ class CircleReport {
       intonation: intonation ?? this.intonation,
       theWordsQuranStranger: theWordsQuranStranger ?? this.theWordsQuranStranger,
       other: other ?? this.other,
+      generalRate: generalRate ?? this.generalRate,
+      isVisual: isVisual ?? this.isVisual,
+      nextCircleOrder: nextCircleOrder ?? this.nextCircleOrder,
     );
   }
 
@@ -189,6 +204,10 @@ class CircleReport {
       'farthestPast': farthestPast,
       'farthestPastRate': farthestPastRate,
       'other': other,
+      'generalRate': generalRate ?? newRate,
+      'isVisual': isVisual,
+      'nextCircleOrder': nextCircleOrder,
+      'creationTime': creationTime.toIso8601String(),
     };
 
     if (includeId) {

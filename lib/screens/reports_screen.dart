@@ -1,11 +1,14 @@
-import 'package:ajyal_reports/services/report_service.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/report_controller.dart';
-import '../models/circle_report.dart';
 import '../models/user.dart';
+import '../services/report_service.dart';
+import '../utils/report_helpers.dart';
 import '../widgets/page_transition_wrapper.dart';
 import '../widgets/toast.dart';
 import 'login_screen.dart';
@@ -20,32 +23,36 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  String? _lastErrorMessage;
+  final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final auth = context.read<AuthController>();
-      final controller = context.read<ReportController>();
       final user = auth.currentUser;
       if (user != null) {
-        await controller.refresh(user);
+        await context.read<ReportController>().refresh(user);
       }
     });
   }
 
-  void _maybeShowError(String? message) {
-    if (message == null) {
-      _lastErrorMessage = null;
-      return;
+  void _onScroll() {
+    final c = context.read<ReportController>();
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      c.loadMore();
     }
-    if (_lastErrorMessage == message) return;
-    _lastErrorMessage = message;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showToast(context, message, isError: true);
-    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _scrollController.dispose();
+    _debounce?.cancel();
+    super.dispose();
   }
 
   @override
@@ -53,486 +60,130 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final auth = context.watch<AuthController>();
     final controller = context.watch<ReportController>();
     final user = auth.currentUser;
-
-    _maybeShowError(controller.errorMessage);
-
-    if (user == null) {
-      return const LoginScreen();
-    }
+    if (user == null) return const LoginScreen();
 
     return PageTransitionWrapper(
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('تقارير الحلقات'),
-          actions: [
-            IconButton(
-              onPressed: () => _logout(auth),
-              icon: const Icon(Icons.logout),
-              tooltip: 'تسجيل الخروج',
-            )
-          ],
-        ),
-        drawer: _ReportsDrawer(
-          currentUser: user,
-          onLogout: () => _logout(auth),
-          onAddReport: () => _openReportForm(user),
-        ),
+        appBar: AppBar(title: const Text('تقارير الحلقات')),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _openReportForm(user),
+          onPressed: user.isStudent ? null : () => _openForm(user),
           icon: const Icon(Icons.add),
           label: const Text('إضافة تقرير'),
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: controller.isLoading
-                  ? const Center(child: CircularProgressIndicator.adaptive())
-                  : controller.reports.isEmpty
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.insert_chart_outlined,
-                              size: 64,
-                              color:
-                                  Theme.of(context).colorScheme.onBackground.withOpacity(0.4),
-                            ),
-                            const SizedBox(height: 12),
-                            const Text('لا توجد تقارير بعد', style: TextStyle(fontSize: 16)),
-                            const SizedBox(height: 4),
-                            Text(
-                              'يمكنك إضافة تقرير جديد من الزر أسفل اليمين',
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.6),
-                              ),
-                            ),
-                          ],
-                        )
-                      : RefreshIndicator(
-                          onRefresh: () => controller.refresh(user),
-                          child: ListView.separated(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                            itemBuilder: (context, index) {
-                              final row = controller.reports[index];
-                              return _ReportCard(
-                                row: row,
-                                onEdit: () async {
-                                  final result = await Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => ReportFormScreen(
-                                        currentUser: user,
-                                        existingReport: row.report,
-                                      ),
-                                    ),
-                                  );
-                                  if (!mounted) return;
-                                  if (result is String && result.isNotEmpty) {
-                                    showToast(context, result);
-                                  }
-                                  controller.refresh(user);
-                                },
-                                onView: () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => ReportDetailsScreen(row: row),
-                                  ),
-                                ),
-                              );
-                            },
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
-                            itemCount: controller.reports.length,
+        body: Column(children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'بحث',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    controller.search = '';
+                    controller.refresh(user);
+                  },
+                ),
+              ),
+              onChanged: (v) {
+                _debounce?.cancel();
+                _debounce = Timer(const Duration(milliseconds: 300), () {
+                  controller.search = v;
+                  controller.refresh(user);
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: controller.isLoading
+                ? const Center(child: CircularProgressIndicator.adaptive())
+                : ListView.builder(
+                    controller: _scrollController,
+                    itemCount: controller.reports.length + (controller.isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index >= controller.reports.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator.adaptive()),
+                        );
+                      }
+                      final row = controller.reports[index];
+                      return ListTile(
+                        title: Text(getStudentName(row)),
+                        subtitle: Text('${getCircleName(row)} • ${formatDate(row.report.creationTime)}'),
+                        trailing: Wrap(spacing: 4, children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove_red_eye_outlined),
+                            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReportDetailsScreen(row: row, currentUser: user))),
                           ),
-                        ),
-              ),
-            ],
-          ),
-        ),
-      
-    );
-  }
-
-  Future<void> _logout(AuthController auth) async {
-    await auth.logout();
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (_) => false,
-    );
-  }
-
-  Future<void> _openReportForm(UserProfile user) async {
-    final controller = context.read<ReportController>();
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ReportFormScreen(currentUser: user),
-      ),
-    );
-    if (!mounted) return;
-    if (result is String && result.isNotEmpty) {
-      showToast(context, result);
-    }
-    controller.refresh(user);
-  }
-}
-
-class _ReportsDrawer extends StatelessWidget {
-  const _ReportsDrawer({
-    required this.currentUser,
-    required this.onAddReport,
-    required this.onLogout,
-  });
-
-  final UserProfile currentUser;
-  final VoidCallback onAddReport;
-  final VoidCallback onLogout;
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'تطبيق تقارير الحلقات',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const CircleAvatar(
-                        child: Icon(Icons.person_outline),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              currentUser.fullName.isEmpty
-                                  ? 'مستخدم غير معروف'
-                                  : currentUser.fullName,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                          IconButton(
+                            icon: const Icon(Icons.share_outlined),
+                            onPressed: () => _sendWhatsApp(row),
+                          ),
+                          if (controller.canManageReports) ...[
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: () async {
+                                await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReportFormScreen(currentUser: user, existingReport: row.report)));
+                                if (mounted) controller.refresh(user);
+                              },
                             ),
-                            Text(
-                              currentUser.userType.label,
-                              style: TextStyle(color: Colors.grey.shade700),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () => _delete(row.report.id, user),
                             ),
-                          ],
-                        ),
-                      )
-                    ],
+                          ]
+                        ]),
+                      );
+                    },
                   ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.list_alt),
-              title: const Text('عرض التقارير'),
-              onTap: () => Navigator.of(context).pop(),
-            ),
-            ListTile(
-              leading: const Icon(Icons.add_circle_outline),
-              title: const Text('إضافة تقرير'),
-              onTap: () async {
-                Navigator.of(context).pop();
-                await Future<void>.delayed(const Duration(milliseconds: 200));
-                onAddReport();
-              },
-            ),
-            const Spacer(),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('تسجيل الخروج'),
-              onTap: () async {
-                Navigator.of(context).pop();
-                await Future<void>.delayed(const Duration(milliseconds: 200));
-                onLogout();
-              },
-            ),
-          ],
-        ),
+          )
+        ]),
       ),
     );
   }
-}
 
-class _ReportCard extends StatelessWidget {
-  const _ReportCard({required this.row, required this.onEdit, required this.onView});
-
-  final ReportDisplayRow row;
-  final VoidCallback onEdit;
-  final VoidCallback onView;
-
-  String _formatDate(DateTime date) {
-    final local = date.toLocal();
-    final twoDigits = (int value) => value.toString().padLeft(2, '0');
-    return '${local.year}/${twoDigits(local.month)}/${twoDigits(local.day)}';
-  }
-
-  Color _statusColor(AttendStatus status) {
-    switch (status) {
-      case AttendStatus.attended:
-        return const Color(0xFF22C55E);
-      case AttendStatus.ExcusedAbsence:
-        return const Color(0xFFf59e0b);
-      case AttendStatus.UnexcusedAbsence:
-        return const Color(0xFFef4444);
-    }
-  }
-
-  Widget _buildMetaRow(BuildContext context, IconData icon, String label, String value) {
-    if (value.trim().isEmpty) return const SizedBox.shrink();
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          size: 18,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                height: 1.4,
-              ),
-              children: [
-                TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
-                TextSpan(text: value),
-              ],
-            ),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildDivider(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      height: 1,
-      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final studentName = row.studentName.isEmpty ? 'طالب غير معروف' : row.studentName;
-    final teacherName = row.teacherName.isEmpty ? 'معلم غير معروف' : row.teacherName;
-    final circleName = row.circleName.isEmpty ? 'حلقة غير معروفة' : row.circleName;
-    final report = row.report;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
+  Future<void> _delete(String id, UserProfile user) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('حذف التقرير'),
+        content: const Text('هل انت متاكد من حذف التقرير؟'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Yes')),
         ],
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(studentName,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          )),
-                      const SizedBox(height: 4),
-                      Text(
-                        circleName,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                      Text(
-                        teacherName,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                        decoration: BoxDecoration(
-                          color: _statusColor(report.attendStatueId).withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      child: Text(
-                        report.attendStatueId.label,
-                        style: TextStyle(
-                          color: _statusColor(report.attendStatueId),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _formatDate(report.creationTime),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            ),
-            _buildDivider(context),
-            Wrap(
-              spacing: 12,
-              runSpacing: 6,
-              children: [
-                if (report.minutes != null)
-                  Chip(
-                    avatar: const Icon(Icons.timer_outlined, size: 18),
-                    label: Text('${report.minutes} دقيقة'),
-                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                  ),
-                if (report.newId != null)
-                  Chip(
-                    avatar: const Icon(Icons.bookmark_border, size: 18),
-                    label: Text('الجزء الجديد رقم ${report.newId}'),
-                    backgroundColor: Theme.of(context).colorScheme.tertiary.withOpacity(0.12),
-                  ),
-              ],
-            ),
-            if ((report.newFrom ?? '').isNotEmpty || (report.newTo ?? '').isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: _buildMetaRow(
-                  context,
-                  Icons.menu_book_outlined,
-                  'الجديد',
-                  '${report.newFrom ?? ''}${report.newFrom != null && report.newTo != null ? ' → ' : ''}${report.newTo ?? ''}',
-                ),
-              ),
-            if ((report.recentPast ?? '').isNotEmpty || (report.recentPastRate ?? '').isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: _buildMetaRow(
-                  context,
-                  Icons.history_toggle_off,
-                  'القريب',
-                  _combineText(report.recentPast, report.recentPastRate),
-                ),
-              ),
-            if ((report.distantPast ?? '').isNotEmpty || (report.distantPastRate ?? '').isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: _buildMetaRow(
-                  context,
-                  Icons.auto_stories_outlined,
-                  'البعيد',
-                  _combineText(report.distantPast, report.distantPastRate),
-                ),
-              ),
-            if ((report.farthestPast ?? '').isNotEmpty || (report.farthestPastRate ?? '').isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: _buildMetaRow(
-                  context,
-                  Icons.menu_book,
-                  'الأبعد',
-                  _combineText(report.farthestPast, report.farthestPastRate),
-                ),
-              ),
-            if ((report.theWordsQuranStranger ?? '').isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: _buildMetaRow(
-                  context,
-                  Icons.translate,
-                  'غريب القرآن',
-                  report.theWordsQuranStranger ?? '',
-                ),
-              ),
-            if ((report.intonation ?? '').isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: _buildMetaRow(
-                  context,
-                  Icons.graphic_eq,
-                  'التجويد',
-                  report.intonation ?? '',
-                ),
-              ),
-            if ((report.other ?? '').isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: _buildMetaRow(
-                  context,
-                  Icons.notes,
-                  'ملاحظات',
-                  report.other ?? '',
-                ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Wrap(
-                spacing: 8,
-                children: [
-                  TextButton.icon(
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('تعديل التقرير'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: onView,
-                    icon: const Icon(Icons.visibility_outlined),
-                    label: const Text('عرض التفاصيل'),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
+    if (ok != true) return;
+    await context.read<ReportService>().deleteReport(id);
+    if (mounted) {
+      showToast(context, 'تم حذف التقرير');
+      context.read<ReportController>().refresh(user);
+    }
   }
 
-  String _combineText(String? value, String? rate) {
-    final parts = [value, rate].where((element) => element != null && element!.trim().isNotEmpty).map((e) => e!.trim()).toList();
-    return parts.join(' — ');
+  Future<void> _sendWhatsApp(ReportDisplayRow row) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('إرسال التقرير عبر واتساب'),
+        content: const Text('تأكيد إنشاء نص الرسالة ومشاركته؟'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('إرسال')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await Clipboard.setData(ClipboardData(text: buildWhatsAppPayload(row)));
+    if (mounted) showToast(context, 'تم نسخ نص التقرير للمشاركة عبر واتساب');
+  }
+
+  Future<void> _openForm(UserProfile user) async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReportFormScreen(currentUser: user)));
+    if (mounted) context.read<ReportController>().refresh(user);
   }
 }

@@ -52,6 +52,20 @@ class ApiClient {
     return _decodeResponse(response);
   }
 
+
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    final uri = Uri.parse('$baseUrl$path').replace(
+      queryParameters: query?.map((key, value) => MapEntry(key, '$value')),
+    );
+    final response = await _http.delete(
+      uri,
+      headers: _headers(isAuthenticated: true),
+    );
+    return _decodeResponse(response);
+  }
   Map<String, String> _headers({required bool isAuthenticated}) {
     final headers = <String, String>{
       'Content-Type': 'application/json',
