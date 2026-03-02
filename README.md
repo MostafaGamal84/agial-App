@@ -1,6 +1,6 @@
 # Ajyal Al-Quran – Mobile Reports (Flutter)
 
-This Flutter app mirrors the Ajyal Al-Quran web experience for logging in with phone/email, confirming OTP, viewing role-filtered circle reports, and adding or editing reports using the same backend endpoints.
+This Flutter app mirrors the Ajyal Al-Quran web experience for logging in with email/password, viewing role-filtered circle reports, and adding or editing reports using the same backend endpoints.
 
 ## Configuration
 - Set the API base URL at build time using the `API_BASE_URL` Dart define (defaults to `https://ajyalbackend.somee.com/api`).
@@ -21,9 +21,12 @@ This Flutter app mirrors the Ajyal Al-Quran web experience for logging in with p
    ```
 
 ## Highlights
-- Login + OTP confirmation wired to `/api/Account/Login` and `/api/Account/VerifyCode` responses.
+- Login with email/password wired to `/api/Account/Login`, with token-based authenticated requests.
 - Role-based dropdown chaining (Supervisor → Teacher → Circle → Student) uses `UsersForGroups`, `Circle/GetResultsByFilter`, and `Circle/Get` to mirror web filtering.
 - Attendance logic drives conditional required fields for minutes and memorization sections before calling `CircleReport/Create` or `CircleReport/Update`.
 - Reports list pulls from `CircleReport/GetResultsByFilter` while enforcing teacher scoping for logged-in teachers.
 
 **Note:** The app now targets real endpoints; provide valid backend credentials and OTP codes from your environment when testing.
+
+## API handoff for mobile team
+- Arabic integration scenario (login + create/list/update/delete report): `docs/mobile-report-scenario.md`.
