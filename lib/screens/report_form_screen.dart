@@ -757,6 +757,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           : null,
       other:
           _status == AttendStatus.attended ? _otherController.text : null,
+      generalRate: _status == AttendStatus.attended ? _newRateController.text : null,
+      isVisual: null,
+      nextCircleOrder: null,
     );
 
     setState(() => _isSaving = true);
