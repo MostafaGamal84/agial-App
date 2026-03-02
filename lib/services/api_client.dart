@@ -11,7 +11,7 @@ class ApiClient {
         baseUrl = baseUrl ??
             const String.fromEnvironment(
               'API_BASE_URL',
-              defaultValue: 'https://ajyalbackend.somee.com/api',
+              defaultValue: 'https://localhost:7260/api',
             );
 
   final http.Client _http;
@@ -69,13 +69,92 @@ class ApiClient {
         : <String, dynamic>{};
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (decoded is Map<String, dynamic>) {
+        if (decoded['isSuccess'] == true) {
+          return decoded;
+        } else if (decoded['isSuccess'] == false) {
+          throw ApiException(
+            message: _extractErrorMessage(decoded),
+            errors: _parseErrors(decoded['errors']),
+            statusCode: response.statusCode,
+          );
+        }
+      }
       return decoded is Map<String, dynamic> ? decoded : {'result': decoded};
     }
 
-    final message =
-        decoded is Map<String, dynamic> && decoded['error'] != null
-            ? decoded['error'].toString()
-            : 'HTTP ${response.statusCode}: ${response.reasonPhrase}';
-    throw Exception(message);
+    if (response.statusCode == 401) {
+      throw ApiException(
+        message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول снова',
+        errors: [],
+        statusCode: 401,
+        isUnauthorized: true,
+      );
+    }
+
+    throw ApiException(
+      message: _extractErrorMessage(decoded),
+      errors: _parseErrors(decoded['errors']),
+      statusCode: response.statusCode,
+    );
   }
+
+  String _extractErrorMessage(Map<String, dynamic> decoded) {
+    final errors = decoded['errors'] as List<dynamic>?;
+    if (errors != null && errors.isNotEmpty) {
+      final firstError = errors.first as Map<String, dynamic>;
+      if (firstError['fieldLang'] != null && 
+          (firstError['fieldLang'] as String).isNotEmpty) {
+        return firstError['fieldLang'] as String;
+      }
+      return firstError['message']?.toString() ?? 'حدث خطأ غير متوقع';
+    }
+    return decoded['message']?.toString() ?? 'حدث خطأ غير متوقع';
+  }
+
+  List<ApiError> _parseErrors(dynamic errors) {
+    if (errors == null) return [];
+    if (errors is! List) return [];
+    
+    return errors.map((e) {
+      final error = e as Map<String, dynamic>;
+      return ApiError(
+        fieldName: error['fieldName']?.toString(),
+        code: error['code']?.toString(),
+        message: error['message']?.toString(),
+        fieldLang: error['fieldLang']?.toString(),
+      );
+    }).toList();
+  }
+}
+
+class ApiException implements Exception {
+  final String message;
+  final List<ApiError> errors;
+  final int statusCode;
+  final bool isUnauthorized;
+
+  ApiException({
+    required this.message,
+    required this.errors,
+    required this.statusCode,
+    this.isUnauthorized = false,
+  });
+
+  @override
+  String toString() => message;
+}
+
+class ApiError {
+  final String? fieldName;
+  final String? code;
+  final String? message;
+  final String? fieldLang;
+
+  ApiError({
+    this.fieldName,
+    this.code,
+    this.message,
+    this.fieldLang,
+  });
 }
