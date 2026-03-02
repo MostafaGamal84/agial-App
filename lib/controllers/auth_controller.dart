@@ -13,7 +13,6 @@ class AuthController extends ChangeNotifier {
   bool isLoading = false;
   bool isRestoring = true;
   String? errorMessage;
-  bool codeSent = false;
 
   UserProfile? get currentUser => _authService.currentUser;
   String? get pendingOtpCode => _authService.pendingOtpCode;
@@ -24,18 +23,20 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(String login, {String? password}) async {
+  Future<UserProfile?> login(String login, {String? password}) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
     try {
-      await _authService.login(login, password: password);
-      codeSent = true;
+      final user = await _authService.login(login, password: password);
+      return user;
     } catch (e) {
       errorMessage = e.toString();
+      return null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   Future<UserProfile?> verify(String otp) async {
@@ -45,7 +46,6 @@ class AuthController extends ChangeNotifier {
     try {
       // 👈 مهم: auth_service.verifyOtp يرجّع UserProfile مبني من data اللي فيها role/branchId
       final user = await _authService.verifyOtp(otp);
-      codeSent = false;
       return user;
     } catch (e) {
       errorMessage = e.toString();
