@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/auth_controller.dart';
@@ -8,6 +7,7 @@ import 'screens/splash_screen.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/report_service.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   final apiClient = ApiClient();
@@ -32,94 +32,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthController>();
-    const seedColor = Color(0xFF0EA5A4);
-    const secondaryColor = Color(0xFFF59E0B);
-    const tertiaryColor = Color(0xFF22C55E);
-    const backgroundColor = Color(0xFF0B1220);
-    const surfaceColor = Color(0xFF111C2E);
-
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: seedColor,
-      brightness: Brightness.dark,
-    ).copyWith(
-      secondary: secondaryColor,
-      onSecondary: Colors.black87,
-      tertiary: tertiaryColor,
-      onPrimary: Colors.white,
-      onTertiary: Colors.white,
-      background: backgroundColor,
-      onBackground: Colors.white,
-      surface: surfaceColor,
-      onSurface: Colors.white,
-    );
-
     return MaterialApp(
       title: 'Ajyal Al-Quran Reports',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: colorScheme,
-        scaffoldBackgroundColor: backgroundColor,
-        useMaterial3: true,
-        textTheme: GoogleFonts.cairoTextTheme().apply(
-          bodyColor: Colors.white,
-          displayColor: Colors.white,
-          fontFamily: 'SuisseIntl',
-        ),
-        fontFamily: 'SuisseIntl',
-        appBarTheme: AppBarTheme(
-          backgroundColor: surfaceColor,
-          foregroundColor: colorScheme.onSurface,
-          elevation: 0,
-        ),
-        cardTheme: CardThemeData(
-          color: surfaceColor,
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.white.withOpacity(0.06)),
-          ),
-        ),
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: secondaryColor,
-          foregroundColor: Colors.black87,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: seedColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: colorScheme.onSurface,
-            side: BorderSide(color: Colors.white.withOpacity(0.2)),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF1F2937),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.12)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.12)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: seedColor, width: 1.6),
-          ),
-          labelStyle: const TextStyle(color: Colors.white70),
-        ),
-      ),
+      themeMode: ThemeMode.dark,
+      darkTheme: darkTheme,
+      theme: darkTheme,
       builder: (context, child) {
         return Directionality(
           textDirection: TextDirection.rtl,

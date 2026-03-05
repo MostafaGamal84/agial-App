@@ -27,3 +27,15 @@ flutter:
   assets:
     - assets/images/
     - assets/sounds/
+
+  fonts:
+    - family: SuisseIntl
+      fonts:
+        - asset: assets/fonts/SuisseIntl/SuisseIntl-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/SuisseIntl/SuisseIntl-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/SuisseIntl/SuisseIntl-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/SuisseIntl/SuisseIntl-Bold.ttf
+          weight: 700
