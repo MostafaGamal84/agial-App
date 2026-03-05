@@ -33,11 +33,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
-    const seedColor = Color(0xFF7C3AED);
-    const secondaryColor = Color(0xFFC3A56A);
+    const seedColor = Color(0xFF0EA5A4);
+    const secondaryColor = Color(0xFFF59E0B);
     const tertiaryColor = Color(0xFF22C55E);
-    const backgroundColor = Color(0xFF0F1622);
-    const surfaceColor = Color(0xFF172233);
+    const backgroundColor = Color(0xFF0B1220);
+    const surfaceColor = Color(0xFF111C2E);
 
     final colorScheme = ColorScheme.fromSeed(
       seedColor: seedColor,
@@ -62,9 +62,12 @@ class MyApp extends StatelessWidget {
         colorScheme: colorScheme,
         scaffoldBackgroundColor: backgroundColor,
         useMaterial3: true,
-        textTheme: GoogleFonts.cairoTextTheme()
-            .apply(bodyColor: Colors.white, displayColor: Colors.white),
-        fontFamily: GoogleFonts.cairo().fontFamily,
+        textTheme: GoogleFonts.cairoTextTheme().apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
+          fontFamily: 'SuisseIntl',
+        ),
+        fontFamily: 'SuisseIntl',
         appBarTheme: AppBarTheme(
           backgroundColor: surfaceColor,
           foregroundColor: colorScheme.onSurface,
