@@ -131,7 +131,24 @@ class ReportService {
   }
 
   Future<void> deleteReport(String id) async {
-    await _apiClient.delete('/CircleReport/Delete', query: {'id': id});
+    final reportId = id.trim();
+    if (reportId.isEmpty) {
+      throw Exception('معرّف التقرير غير صالح');
+    }
+
+    try {
+      await _apiClient.delete('/CircleReport/Delete', query: {'id': reportId});
+      return;
+    } catch (_) {
+      // بعض البيئات لا تمرّر DELETE بشكل صحيح، لذلك نوفّر بديل POST.
+    }
+
+    try {
+      await _apiClient.post('/CircleReport/Delete', body: {'id': reportId});
+      return;
+    } catch (_) {
+      await _apiClient.post('/CircleReport/Delete?id=$reportId');
+    }
   }
 
   Map<String, dynamic> _normalize(dynamic value) {
