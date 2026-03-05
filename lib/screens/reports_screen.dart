@@ -11,6 +11,7 @@ import '../services/report_service.dart';
 import '../utils/report_helpers.dart';
 import '../widgets/page_transition_wrapper.dart';
 import '../widgets/toast.dart';
+import 'login_screen.dart';
 import 'report_details_screen.dart';
 import 'report_form_screen.dart';
 
@@ -89,7 +90,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
     
     await context.read<AuthController>().logout();
     if (mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
     }
   }
 
