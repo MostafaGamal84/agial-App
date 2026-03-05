@@ -295,22 +295,34 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Future<void> _delete(String id, UserProfile user) async {
+    if (id.isEmpty) {
+      showToast(context, 'لا يمكن حذف تقرير بدون معرّف', isError: true);
+      return;
+    }
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('حذف التقرير'),
-        content: const Text('هل انت متاكد من حذف التقرير؟'),
+        content: const Text('هل أنت متأكد من حذف التقرير؟'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Yes')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('حذف')),
         ],
       ),
     );
     if (ok != true) return;
-    await context.read<ReportService>().deleteReport(id);
-    if (mounted) {
-      showToast(context, 'تم حذف التقرير');
-      context.read<ReportController>().refresh(user);
+
+    try {
+      await context.read<ReportService>().deleteReport(id);
+      if (mounted) {
+        showToast(context, 'تم حذف التقرير');
+        await context.read<ReportController>().refresh(user);
+      }
+    } catch (e) {
+      if (mounted) {
+        showToast(context, e.toString(), isError: true);
+      }
     }
   }
 
