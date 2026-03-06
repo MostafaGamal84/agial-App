@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/report_controller.dart';
@@ -203,8 +204,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
     );
     if (confirmed != true) return;
-    await Clipboard.setData(ClipboardData(text: buildWhatsAppPayload(row)));
-    if (mounted) showToast(context, 'تم نسخ نص التقرير للمشاركة عبر واتساب');
+
+    final reportText = buildWhatsAppPayload(row);
+    final whatsappUri = Uri.parse('whatsapp://send?text=${Uri.encodeComponent(reportText)}');
+
+    final opened = await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+    if (opened) return;
+
+    await Clipboard.setData(ClipboardData(text: reportText));
+    if (mounted) {
+      showToast(
+        context,
+        'تعذر فتح واتساب مباشرة. تم نسخ نص التقرير ويمكنك لصقه يدويًا.',
+        isError: true,
+      );
+    }
   }
 }
 
