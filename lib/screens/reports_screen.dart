@@ -498,18 +498,32 @@ class _BottomNavBar extends StatelessWidget {
       child: SizedBox(
         height: 72,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const SizedBox(width: 40),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: currentIndex == 0 ? AppColors.primary.withOpacity(0.18) : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+            Expanded(
+              child: Center(
+                child: IconButton(
+                  onPressed: () => onChanged(0),
+                  icon: Icon(
+                    Icons.bar_chart_rounded,
+                    color: currentIndex == 0 ? active : inactive,
+                    size: 30,
+                  ),
+                ),
               ),
-              child: IconButton(onPressed: () => onChanged(0), icon: Icon(Icons.bar_chart_rounded, color: currentIndex == 0 ? active : inactive, size: 30)),
             ),
-            IconButton(onPressed: () => onChanged(1), icon: Icon(Icons.description_outlined, color: currentIndex == 1 ? active : inactive, size: 30)),
+            const SizedBox(width: 72),
+            Expanded(
+              child: Center(
+                child: IconButton(
+                  onPressed: () => onChanged(1),
+                  icon: Icon(
+                    Icons.description_outlined,
+                    color: currentIndex == 1 ? active : inactive,
+                    size: 30,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
