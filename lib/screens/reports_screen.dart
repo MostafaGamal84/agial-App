@@ -490,41 +490,42 @@ class _BottomNavBar extends StatelessWidget {
     final inactive = AppColors.primary.withOpacity(0.75);
     const active = AppColors.primary;
 
-    return BottomAppBar(
+    return Material(
       color: Colors.white,
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
       elevation: 10,
-      child: SizedBox(
-        height: 72,
-        child: Row(
-          children: [
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  onPressed: () => onChanged(0),
-                  icon: Icon(
-                    Icons.bar_chart_rounded,
-                    color: currentIndex == 0 ? active : inactive,
-                    size: 30,
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 72,
+          child: Row(
+            children: [
+              Expanded(
+                child: Center(
+                  child: IconButton(
+                    onPressed: () => onChanged(0),
+                    icon: Icon(
+                      Icons.bar_chart_rounded,
+                      color: currentIndex == 0 ? active : inactive,
+                      size: 30,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 72),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  onPressed: () => onChanged(1),
-                  icon: Icon(
-                    Icons.description_outlined,
-                    color: currentIndex == 1 ? active : inactive,
-                    size: 30,
+              const SizedBox(width: 72),
+              Expanded(
+                child: Center(
+                  child: IconButton(
+                    onPressed: () => onChanged(1),
+                    icon: Icon(
+                      Icons.description_outlined,
+                      color: currentIndex == 1 ? active : inactive,
+                      size: 30,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
