@@ -87,8 +87,8 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
         title: const Text('حذف التقرير'),
         content: const Text('هل انت متاكد من حذف التقرير؟'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Yes')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('لا')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('نعم')),
         ],
       ),
     );
