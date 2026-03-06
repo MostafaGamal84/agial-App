@@ -83,12 +83,16 @@ class ReportService {
     final query = <String, dynamic>{
       'SkipCount': pageIndex * pageSize,
       'MaxResultCount': pageSize,
-      if ((search ?? '').trim().isNotEmpty) 'Filter': search!.trim(),
+      if ((search ?? '').trim().isNotEmpty) ...{
+        'SearchTerm': search!.trim(),
+        'SearchWord': search.trim(),
+      },
       if (circleId != null) 'circleId': circleId,
       if (studentId != null) 'studentId': studentId,
       if (residentGroup != null) 'residentGroup': residentGroup,
       if (residentId != null) 'residentId': residentId,
-      'teacherId': currentUser.isTeacher ? currentUser.id : teacherId,
+      if ((currentUser.isTeacher ? currentUser.id : teacherId) != null)
+        'teacherId': currentUser.isTeacher ? currentUser.id : teacherId,
     };
 
     final response = await _apiClient.get('/CircleReport/GetResultsByFilter', query: query);
