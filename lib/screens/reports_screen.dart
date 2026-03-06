@@ -10,6 +10,7 @@ import '../controllers/report_controller.dart';
 import '../models/circle_report.dart';
 import '../models/user.dart';
 import '../services/report_service.dart';
+import '../theme/app_colors.dart';
 import '../utils/report_helpers.dart';
 import '../widgets/page_transition_wrapper.dart';
 import '../widgets/toast.dart';
@@ -91,9 +92,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final user = context.read<AuthController>().currentUser;
     if (user == null) return;
     Navigator.of(context)
-        .push(MaterialPageRoute(
-      builder: (_) => ReportFormScreen(currentUser: user),
-    ))
+        .push(MaterialPageRoute(builder: (_) => ReportFormScreen(currentUser: user)))
         .then((_) {
       if (mounted) context.read<ReportController>().refresh(user);
     });
@@ -117,11 +116,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         appBar: AppBar(
           title: Text(_currentTab == 0 ? 'الإحصائيات' : 'التقارير'),
           actions: [
-            IconButton(
-              onPressed: _logout,
-              icon: const Icon(Icons.logout),
-              tooltip: 'تسجيل الخروج',
-            ),
+            IconButton(onPressed: _logout, icon: const Icon(Icons.logout), tooltip: 'تسجيل الخروج'),
           ],
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -129,22 +124,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ? null
             : FloatingActionButton(
                 onPressed: _openAddReport,
-                backgroundColor: const Color(0xFF8E825B),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: const CircleBorder(),
-                elevation: 8,
-                child: const Icon(Icons.add, size: 34),
+                elevation: 6,
+                child: const Icon(Icons.add, size: 36),
               ),
         bottomNavigationBar: _BottomNavBar(
           currentIndex: _currentTab,
           onChanged: (index) => setState(() => _currentTab = index),
         ),
         body: _currentTab == 0
-            ? _DashboardView(
-                totalCount: controller.totalCount,
-                reports: controller.reports,
-                isLoading: controller.isLoading,
-              )
+            ? _DashboardView(totalCount: controller.totalCount, reports: controller.reports, isLoading: controller.isLoading)
             : _ReportsListView(
                 controller: controller,
                 user: user,
@@ -218,11 +209,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 }
 
 class _DashboardView extends StatelessWidget {
-  const _DashboardView({
-    required this.totalCount,
-    required this.reports,
-    required this.isLoading,
-  });
+  const _DashboardView({required this.totalCount, required this.reports, required this.isLoading});
 
   final int totalCount;
   final List<ReportDisplayRow> reports;
@@ -248,10 +235,10 @@ class _DashboardView extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _StatCard(label: 'إجمالي التقارير', value: '$totalCount', icon: Icons.description_outlined),
-              _StatCard(label: 'حضر', value: '$attended', icon: Icons.check_circle_outline, iconColor: const Color(0xFF4CAF50)),
-              _StatCard(label: 'تغيب بعذر', value: '$excused', icon: Icons.info_outline, iconColor: const Color(0xFF03A9F4)),
-              _StatCard(label: 'تغيب بدون عذر', value: '$unexcused', icon: Icons.cancel_outlined, iconColor: const Color(0xFFE53935)),
+              _StatCard(label: 'إجمالي التقارير', value: '$totalCount', icon: Icons.copy_all_rounded),
+              _StatCard(label: 'حضر', value: '$attended', icon: Icons.check_circle_outline, iconColor: AppColors.success),
+              _StatCard(label: 'تغيب بعذر', value: '$excused', icon: Icons.error_outline, iconColor: AppColors.info),
+              _StatCard(label: 'تغيب بدون عذر', value: '$unexcused', icon: Icons.cancel_outlined, iconColor: AppColors.danger),
             ].map((e) => SizedBox(width: (MediaQuery.sizeOf(context).width - 44) / 2, child: e)).toList(),
           ),
           const SizedBox(height: 16),
@@ -261,22 +248,81 @@ class _DashboardView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('توزيع حالات الحضور', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  const Text('إجمالي الرصد', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20)),
                   const SizedBox(height: 16),
-                  _MiniBar(title: 'حضر', count: attended, color: const Color(0xFF4CAF50), maxValue: loadedTotal),
-                  _MiniBar(title: 'غياب بعذر', count: excused, color: const Color(0xFF03A9F4), maxValue: loadedTotal),
-                  _MiniBar(title: 'غياب بدون عذر', count: unexcused, color: const Color(0xFFE53935), maxValue: loadedTotal),
-                  const SizedBox(height: 8),
+                  _AttendanceBarChart(attended: attended, excused: excused, unexcused: unexcused),
+                  const SizedBox(height: 10),
                   Text(
-                    'ملحوظة: الشارت مبني على التقارير المحمّلة حالياً (${reports.length}) من أصل ($totalCount).',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                    'الشارت مبني على التقارير المحمّلة حالياً (${reports.length}) من أصل ($totalCount).',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  const SizedBox(height: 8),
+                  Text('إجمالي الحالات الحالية: $loadedTotal', style: Theme.of(context).textTheme.labelMedium),
                 ],
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AttendanceBarChart extends StatelessWidget {
+  const _AttendanceBarChart({required this.attended, required this.excused, required this.unexcused});
+
+  final int attended;
+  final int excused;
+  final int unexcused;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxValue = [attended, excused, unexcused, 1].reduce(math.max).toDouble();
+
+    return SizedBox(
+      height: 220,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _BarItem(label: 'حضر', value: attended, maxValue: maxValue, color: const Color(0xFFBDE8B9)),
+          _BarItem(label: 'بعذر', value: excused, maxValue: maxValue, color: const Color(0xFF9E8B56)),
+          _BarItem(label: 'بدون عذر', value: unexcused, maxValue: maxValue, color: const Color(0xFF356D62)),
+        ],
+      ),
+    );
+  }
+}
+
+class _BarItem extends StatelessWidget {
+  const _BarItem({required this.label, required this.value, required this.maxValue, required this.color});
+
+  final String label;
+  final int value;
+  final double maxValue;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = value / maxValue;
+    final h = math.max(18.0, normalized * 150);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text('$value', style: const TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 6),
+        Container(
+          width: 48,
+          height: h,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ],
     );
   }
 }
@@ -354,33 +400,21 @@ class _ReportsListView extends StatelessWidget {
                               IconButton(
                                 icon: const Icon(Icons.remove_red_eye_outlined),
                                 onPressed: () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => ReportDetailsScreen(row: row, currentUser: user),
-                                  ),
+                                  MaterialPageRoute(builder: (_) => ReportDetailsScreen(row: row, currentUser: user)),
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.share_outlined),
-                                onPressed: () => onSendWhatsApp(row),
-                              ),
+                              IconButton(icon: const Icon(Icons.share_outlined), onPressed: () => onSendWhatsApp(row)),
                               if (controller.canManageReports) ...[
                                 IconButton(
                                   icon: const Icon(Icons.edit_outlined),
                                   onPressed: () async {
                                     await Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => ReportFormScreen(currentUser: user, existingReport: row.report),
-                                      ),
+                                      MaterialPageRoute(builder: (_) => ReportFormScreen(currentUser: user, existingReport: row.report)),
                                     );
-                                    if (context.mounted) {
-                                      context.read<ReportController>().refresh(user);
-                                    }
+                                    if (context.mounted) context.read<ReportController>().refresh(user);
                                   },
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: () => onDelete(row.report.id),
-                                ),
+                                IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => onDelete(row.report.id)),
                               ]
                             ],
                           ),
@@ -394,12 +428,7 @@ class _ReportsListView extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    this.iconColor,
-  });
+  const _StatCard({required this.label, required this.value, required this.icon, this.iconColor});
 
   final String label;
   final String value;
@@ -411,75 +440,39 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: AppColors.surface1,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.surface3,
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: iconColor ?? Theme.of(context).colorScheme.primary),
+            child: Icon(icon, color: iconColor ?? AppColors.primary),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, color: Colors.white70)),
+                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, color: AppColors.text2)),
                 const SizedBox(height: 6),
-                Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.text1)),
               ],
             ),
           )
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniBar extends StatelessWidget {
-  const _MiniBar({
-    required this.title,
-    required this.count,
-    required this.color,
-    required this.maxValue,
-  });
-
-  final String title;
-  final int count;
-  final Color color;
-  final int maxValue;
-
-  @override
-  Widget build(BuildContext context) {
-    final progress = (count / maxValue).clamp(0.0, 1.0);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Text(title),
-              const Spacer(),
-              Text('$count'),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              minHeight: 10,
-              value: progress,
-              backgroundColor: Colors.white12,
-              valueColor: AlwaysStoppedAnimation(color),
-            ),
-          ),
         ],
       ),
     );
@@ -494,34 +487,31 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inactive = Colors.white70;
-    final active = const Color(0xFF8E825B);
+    final inactive = AppColors.primary.withOpacity(0.75);
+    const active = AppColors.primary;
 
     return BottomAppBar(
+      color: Colors.white,
       shape: const CircularNotchedRectangle(),
       notchMargin: 8,
+      elevation: 10,
       child: SizedBox(
-        height: 70,
+        height: 72,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            IconButton(
-              onPressed: () => onChanged(0),
-              icon: Icon(Icons.bar_chart_rounded, color: currentIndex == 0 ? active : inactive),
-            ),
-            IconButton(
-              onPressed: () => onChanged(1),
-              icon: Icon(Icons.list_alt_rounded, color: currentIndex == 1 ? active : inactive),
-            ),
+            IconButton(onPressed: () => onChanged(0), icon: Icon(Icons.person_outline_rounded, color: inactive, size: 30)),
+            IconButton(onPressed: () => onChanged(1), icon: Icon(Icons.map_outlined, color: inactive, size: 30)),
             const SizedBox(width: 36),
-            IconButton(
-              onPressed: () => onChanged(1),
-              icon: Icon(Icons.description_outlined, color: currentIndex == 1 ? active : inactive),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: currentIndex == 0 ? AppColors.primary.withOpacity(0.18) : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(onPressed: () => onChanged(0), icon: Icon(Icons.bar_chart_rounded, color: currentIndex == 0 ? active : inactive, size: 30)),
             ),
-            IconButton(
-              onPressed: () => onChanged(0),
-              icon: Icon(Icons.person_outline_rounded, color: currentIndex == 0 ? active : inactive),
-            ),
+            IconButton(onPressed: () => onChanged(1), icon: Icon(Icons.description_outlined, color: currentIndex == 1 ? active : inactive, size: 30)),
           ],
         ),
       ),
