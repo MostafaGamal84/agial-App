@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
+import '../theme/app_colors.dart';
 import '../widgets/page_transition_wrapper.dart';
 import 'login_screen.dart';
 import 'reports_screen.dart';
@@ -25,12 +26,9 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(milliseconds: 2500),
     );
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
     _startTransition();
   }
@@ -55,16 +53,12 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _goToNext(AuthController auth) async {
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 700));
     if (!mounted) return;
 
-    final nextPage = auth.currentUser == null
-        ? const LoginScreen()
-        : const ReportsScreen();
+    final nextPage = auth.currentUser == null ? const LoginScreen() : const ReportsScreen();
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => nextPage),
-    );
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => nextPage));
   }
 
   @override
@@ -75,60 +69,83 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return PageTransitionWrapper(
       child: Scaffold(
-        backgroundColor: theme.colorScheme.background,
-        body: SafeArea(
-          child: Center(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white.withOpacity(0.12)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.45),
-                          blurRadius: 26,
-                          offset: const Offset(0, 10),
+        backgroundColor: AppColors.primary,
+        body: Stack(
+          children: [
+            const Positioned.fill(child: _GridOverlay()),
+            SafeArea(
+              child: Center(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 130,
+                        height: 130,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: Colors.white.withOpacity(0.3)),
                         ),
-                      ],
-                    ),
-                    child: Image.asset(
-                      'assets/images/favicon.ico',
-                      width: 140,
-                      height: 140,
-                      fit: BoxFit.contain,
-                    ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Image.asset('assets/images/app_icon.png', fit: BoxFit.contain),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      const Text(
+                        'أجيال القرآن',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'نرتقي بالحلقات',
+                        style: TextStyle(color: Colors.white70, fontSize: 18),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'أجيال القرآن',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'جارٍ التحميل...',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _GridOverlay extends StatelessWidget {
+  const _GridOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _GridPainter());
+  }
+}
+
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = Colors.white.withOpacity(0.08)
+      ..strokeWidth = 1;
+
+    const space = 44.0;
+    for (double x = 0; x <= size.width; x += space) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), p);
+    }
+    for (double y = 0; y <= size.height; y += space) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
