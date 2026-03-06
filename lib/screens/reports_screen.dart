@@ -248,14 +248,14 @@ class _DashboardView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('إجمالي الرصد', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20)),
+                  const Text('إجمالي التقارير', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20)),
                   const SizedBox(height: 16),
                   _AttendanceBarChart(attended: attended, excused: excused, unexcused: unexcused),
                   const SizedBox(height: 10),
-                  Text(
-                    'الشارت مبني على التقارير المحمّلة حالياً (${reports.length}) من أصل ($totalCount).',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  // Text(
+                  //   'الشارت مبني على التقارير المحمّلة حالياً (${reports.length}) من أصل ($totalCount).',
+                  //   style: Theme.of(context).textTheme.bodySmall,
+                  // ),
                   const SizedBox(height: 8),
                   Text('إجمالي الحالات الحالية: $loadedTotal', style: Theme.of(context).textTheme.labelMedium),
                 ],
