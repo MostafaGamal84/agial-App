@@ -7,6 +7,7 @@ import '../models/student.dart';
 import '../models/user.dart';
 import '../models/quran_surah.dart';
 import '../services/report_service.dart';
+import '../utils/report_helpers.dart';
 import '../widgets/page_transition_wrapper.dart';
 import '../widgets/toast.dart';
 
@@ -44,6 +45,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   late TextEditingController theWordsQuranStranger;
   late TextEditingController _otherController;
   late TextEditingController _creationTimeController;
+  DateTime? _selectedCreationTime;
 
   int? _selectedSurahNumber;
   String? _selectedSupervisorId;
@@ -127,6 +129,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _otherController = TextEditingController();
     _creationTimeController = TextEditingController();
     _isVisual = true;
+    _selectedCreationTime = widget.existingReport?.creationTime ?? DateTime.now();
+    _creationTimeController.text = formatDate(_selectedCreationTime);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
   }
@@ -192,6 +196,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     intonation.text = existing.intonation ?? '';
     theWordsQuranStranger.text = existing.theWordsQuranStranger ?? '';
     _otherController.text = existing.other ?? '';
+    _selectedCreationTime = existing.creationTime;
+    _creationTimeController.text = formatDate(_selectedCreationTime);
     _selectedSurahNumber = existing.newId;
     _isVisual = existing.isVisual ?? true;
 
@@ -507,6 +513,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ],
             
             _buildStatusDropdown(theme),
+            const SizedBox(height: 12),
+            _buildCreationTimeField(),
             const SizedBox(height: 12),
             
             if (_status == AttendStatus.attended || _status == AttendStatus.UnexcusedAbsence)
@@ -825,6 +833,42 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
+  Widget _buildCreationTimeField() {
+    return TextFormField(
+      controller: _creationTimeController,
+      readOnly: true,
+      decoration: _inputDecoration('وقت الإنشاء').copyWith(
+        suffixIcon: const Icon(Icons.calendar_today_outlined),
+      ),
+      onTap: _pickCreationDate,
+      validator: (v) => _validateRequired(v, 'وقت الإنشاء'),
+    );
+  }
+
+  Future<void> _pickCreationDate() async {
+    final initial = _selectedCreationTime ?? DateTime.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate == null) return;
+
+    setState(() {
+      final previous = _selectedCreationTime ?? DateTime.now();
+      _selectedCreationTime = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        previous.hour,
+        previous.minute,
+      );
+      _creationTimeController.text = formatDate(_selectedCreationTime);
+    });
+  }
+
   Widget _buildSubmitButton(ThemeData theme) {
     return SizedBox(
       width: double.infinity,
@@ -860,7 +904,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     final draft = CircleReport(
       id: widget.existingReport?.id ?? '',
-      creationTime: widget.existingReport?.creationTime ?? DateTime.now(),
+      creationTime: _selectedCreationTime ?? widget.existingReport?.creationTime ?? DateTime.now(),
       teacherId: _selectedTeacherId ?? widget.currentUser.id,
       managerId: _selectedSupervisorId,
       circleId: _selectedCircle!.id,
