@@ -910,9 +910,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       circleId: _selectedCircle!.id,
       studentId: _selectedStudent!.id,
       attendStatueId: _status,
-      minutes: _status == AttendStatus.ExcusedAbsence
+      minutes: _status == AttendStatus.UnexcusedAbsence || _status == AttendStatus.attended
           ? int.tryParse(_minutesController.text)
-          : (_status == AttendStatus.attended ? int.tryParse(_minutesController.text) : null),
+          : null,
       newId: _status == AttendStatus.attended ? _selectedSurahNumber : null,
       newFrom: _status == AttendStatus.attended ? _newFromController.text : null,
       newTo: _status == AttendStatus.attended ? _newToController.text : null,
