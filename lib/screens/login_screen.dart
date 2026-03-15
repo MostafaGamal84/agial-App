@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 24),
                           const Text(
-                            'تسجيل الدخول',
+                            'أجيال القرآن',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 46,
