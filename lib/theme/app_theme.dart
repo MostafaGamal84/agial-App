@@ -48,7 +48,7 @@ final ThemeData darkTheme = ThemeData(
     iconTheme: IconThemeData(color: AppColors.text1),
     titleTextStyle: TextStyle(
       fontFamily: AppTypography.fontFamily,
-      fontSize: 24,
+      fontSize: 22,
       fontWeight: AppTypography.bold,
       color: AppColors.text1,
     ),
@@ -66,9 +66,9 @@ final ThemeData darkTheme = ThemeData(
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
     fillColor: AppColors.surface1,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    hintStyle: AppTypography.textTheme.bodyMedium?.copyWith(color: AppColors.text3),
-    labelStyle: AppTypography.textTheme.bodyMedium?.copyWith(color: AppColors.primary),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+    hintStyle: AppTypography.textTheme.bodySmall?.copyWith(color: AppColors.text3),
+    labelStyle: AppTypography.textTheme.bodySmall?.copyWith(color: AppColors.primary),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
       borderSide: const BorderSide(color: AppColors.border),
@@ -92,12 +92,12 @@ final ThemeData darkTheme = ThemeData(
   ),
   iconTheme: const IconThemeData(
     color: AppColors.primary,
-    size: 22,
+    size: 20,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(
       elevation: const WidgetStatePropertyAll(0),
-      minimumSize: const WidgetStatePropertyAll(Size(0, 54)),
+      minimumSize: const WidgetStatePropertyAll(Size(0, 52)),
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) return const Color(0xFFD5D5D5);
         return AppColors.primary;
@@ -106,7 +106,7 @@ final ThemeData darkTheme = ThemeData(
       textStyle: const WidgetStatePropertyAll(
         TextStyle(
           fontFamily: AppTypography.fontFamily,
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: AppTypography.semiBold,
         ),
       ),
@@ -122,7 +122,7 @@ final ThemeData darkTheme = ThemeData(
       textStyle: const WidgetStatePropertyAll(
         TextStyle(
           fontFamily: AppTypography.fontFamily,
-          fontSize: 16,
+          fontSize: 15,
           fontWeight: AppTypography.semiBold,
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/report_stats.dart';
 import '../models/user.dart';
 import '../services/report_service.dart';
 
@@ -13,13 +14,16 @@ class ReportController extends ChangeNotifier {
   bool isLoadingMore = false;
   String? errorMessage;
   int totalCount = 0;
+  ReportStats stats = const ReportStats();
   int pageIndex = 0;
   static const int pageSize = 10;
 
   String search = '';
+  String? teacherId;
   String? circleId;
   int? studentId;
   int? residentGroup;
+  DateTime? month;
 
   bool get hasMore => reports.length < totalCount;
   bool get canManageReports => _user?.isStudent != true;
@@ -32,15 +36,25 @@ class ReportController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     try {
-      final page = await reportService.fetchReports(
+      final pageFuture = reportService.fetchReports(
         currentUser: currentUser,
         pageIndex: 0,
         pageSize: pageSize,
         search: search,
+        teacherId: teacherId,
         circleId: circleId,
         studentId: studentId,
         residentGroup: residentGroup,
+        month: month,
       );
+      final statsFuture = reportService.fetchReportStats(
+        currentUser: currentUser,
+        teacherId: teacherId,
+        studentId: studentId,
+        month: month,
+      );
+      final page = await pageFuture;
+      stats = await statsFuture;
       reports
         ..clear()
         ..addAll(page.items);
@@ -49,6 +63,7 @@ class ReportController extends ChangeNotifier {
       errorMessage = e.toString();
       reports.clear();
       totalCount = 0;
+      stats = const ReportStats();
     }
     isLoading = false;
     notifyListeners();
@@ -65,9 +80,11 @@ class ReportController extends ChangeNotifier {
         pageIndex: pageIndex,
         pageSize: pageSize,
         search: search,
+        teacherId: teacherId,
         circleId: circleId,
         studentId: studentId,
         residentGroup: residentGroup,
+        month: month,
       );
       reports.addAll(page.items);
       totalCount = page.totalCount;

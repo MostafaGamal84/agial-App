@@ -458,6 +458,64 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return null;
   }
 
+  String _selectedSupervisorName() {
+    final supervisorId =
+        (_selectedSupervisorId ?? widget.existingReport?.managerId ?? '').trim();
+    if (supervisorId.isEmpty) {
+      return '-';
+    }
+
+    for (final supervisor in supervisors) {
+      if (supervisor.id == supervisorId) {
+        return supervisor.fullName;
+      }
+    }
+
+    if (widget.currentUser.isManager && widget.currentUser.id == supervisorId) {
+      return widget.currentUser.fullName;
+    }
+
+    return 'المشرف رقم $supervisorId';
+  }
+
+  String _selectedTeacherName() {
+    final teacherId =
+        (_selectedTeacherId ?? widget.existingReport?.teacherId ?? '').trim();
+    if (teacherId.isEmpty) {
+      return '-';
+    }
+
+    for (final teacher in teachers) {
+      if (teacher.id == teacherId) {
+        return teacher.fullName;
+      }
+    }
+
+    if (widget.currentUser.isTeacher && widget.currentUser.id == teacherId) {
+      return widget.currentUser.fullName;
+    }
+
+    return 'المعلم رقم $teacherId';
+  }
+
+  String _selectedCircleName() {
+    if (_selectedCircle != null) {
+      return _selectedCircle!.name;
+    }
+
+    final circleId = widget.existingReport?.circleId ?? '';
+    return circleId.isEmpty ? '-' : 'الحلقة رقم $circleId';
+  }
+
+  String _selectedStudentName() {
+    if (_selectedStudent != null) {
+      return _selectedStudent!.fullName;
+    }
+
+    final studentId = widget.existingReport?.studentId;
+    return studentId == null ? '-' : 'الطالب رقم $studentId';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -491,35 +549,40 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (isEditing) _buildStatusPill(theme),
-            const SizedBox(height: 16),
-            
-            if (showSupervisorSelector && !isEditing) _buildSupervisorDropdown(theme),
-            const SizedBox(height: 12),
-            
-            if (showTeacherSelector && !isEditing) _buildTeacherDropdown(theme),
-            const SizedBox(height: 12),
-            
+            if (isEditing) ...[
+              _buildStatusPill(theme),
+              const SizedBox(height: 16),
+            ],
+            if (showSupervisorSelector && !isEditing) ...[
+              _buildSupervisorDropdown(theme),
+              const SizedBox(height: 12),
+            ],
+            if (showTeacherSelector && !isEditing) ...[
+              _buildTeacherDropdown(theme),
+              const SizedBox(height: 12),
+            ],
             if (!isEditing) ...[
               _buildCircleDropdown(theme),
               const SizedBox(height: 12),
               _buildStudentDropdown(theme),
               const SizedBox(height: 12),
             ] else ...[
-              _buildReadOnlyField('الحلقة', _selectedCircle?.name ?? '-'),
+              _buildReadOnlyField('المشرف', _selectedSupervisorName()),
               const SizedBox(height: 12),
-              _buildReadOnlyField('الطالب', _selectedStudent?.fullName ?? '-'),
+              _buildReadOnlyField('المعلم', _selectedTeacherName()),
+              const SizedBox(height: 12),
+              _buildReadOnlyField('الحلقة', _selectedCircleName()),
+              const SizedBox(height: 12),
+              _buildReadOnlyField('الطالب', _selectedStudentName()),
               const SizedBox(height: 12),
             ],
-            
-            _buildStatusDropdown(theme),
-            const SizedBox(height: 12),
             _buildCreationTimeField(),
             const SizedBox(height: 12),
-            
-            if (_status == AttendStatus.attended || _status == AttendStatus.UnexcusedAbsence)
+            _buildStatusDropdown(theme),
+            const SizedBox(height: 12),
+            if (_status == AttendStatus.attended ||
+                _status == AttendStatus.UnexcusedAbsence)
               _buildMinutesField(),
-            
             if (_status == AttendStatus.attended) ...[
               const SizedBox(height: 16),
               _buildSectionTitle(theme, 'تفاصيل الحفظ'),
@@ -530,25 +593,29 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               const SizedBox(height: 12),
               _buildTextField(_newToController, 'إلى', theme),
               const SizedBox(height: 12),
-              _buildGeneralRateDropdown(theme),
-              const SizedBox(height: 12),
-              _buildIsVisualDropdown(theme),
-              const SizedBox(height: 12),
-              _buildTextField(_nextCircleOrderController, 'مقرر الحصة القادمة', theme, maxLines: 2),
-              const SizedBox(height: 12),
               _buildTextField(_recentPastController, 'المراجعة القريبة', theme),
               const SizedBox(height: 12),
               _buildTextField(_distantPastController, 'المراجعة البعيدة', theme),
               const SizedBox(height: 12),
               _buildTextField(_farthestPastController, 'المراجعة الأبعد', theme),
               const SizedBox(height: 12),
+              _buildGeneralRateDropdown(theme),
+              const SizedBox(height: 12),
               _buildTextField(theWordsQuranStranger, 'كلمات غريب القرآن', theme),
               const SizedBox(height: 12),
               _buildTextField(intonation, 'التجويد', theme),
               const SizedBox(height: 12),
+              _buildIsVisualDropdown(theme),
+              const SizedBox(height: 12),
+              _buildTextField(
+                _nextCircleOrderController,
+                'مقرر الحصة القادمة',
+                theme,
+                maxLines: 2,
+              ),
+              const SizedBox(height: 12),
               _buildTextField(_otherController, 'ملاحظات أخرى', theme, maxLines: 3),
             ],
-            
             const SizedBox(height: 24),
             _buildSubmitButton(theme),
           ],
@@ -579,7 +646,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return Text(
       title,
       style: TextStyle(
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: FontWeight.w600,
         color: theme.colorScheme.onSurface,
       ),
@@ -594,7 +661,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             color: theme.colorScheme.onSurface.withOpacity(0.7),
           ),
         ),
@@ -747,10 +814,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           ? null
           : (value) {
               if (value == null) return;
-              setState(() {
-                _status = value;
-                _applyStatusRules();
-              });
+              _status = value;
+              _applyStatusRules();
             },
       validator: (v) => v == null ? 'حالة الحضور مطلوبة' : null,
     );
@@ -837,11 +902,15 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return TextFormField(
       controller: _creationTimeController,
       readOnly: true,
-      decoration: _inputDecoration('وقت الإنشاء').copyWith(
-        suffixIcon: const Icon(Icons.calendar_today_outlined),
+      decoration: _inputDecoration('تاريخ التقرير').copyWith(
+        suffixIcon: Semantics(
+          label: 'اختيار تاريخ التقرير',
+          button: true,
+          child: const Icon(Icons.calendar_today_outlined),
+        ),
       ),
       onTap: _pickCreationDate,
-      validator: (v) => _validateRequired(v, 'وقت الإنشاء'),
+      validator: (v) => _validateRequired(v, 'تاريخ التقرير'),
     );
   }
 
@@ -885,8 +954,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 ),
               )
             : Text(
-                isEditing ? 'تحديث' : 'إنشاء',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                isEditing ? 'تحديث التقرير' : 'إنشاء التقرير',
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
               ),
       ),
     );

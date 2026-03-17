@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/circle_report.dart';
 import '../models/user.dart';
 import '../services/report_service.dart';
 import '../utils/report_helpers.dart';
@@ -9,7 +10,11 @@ import '../widgets/toast.dart';
 import 'report_form_screen.dart';
 
 class ReportDetailsScreen extends StatefulWidget {
-  const ReportDetailsScreen({super.key, required this.row, required this.currentUser});
+  const ReportDetailsScreen({
+    super.key,
+    required this.row,
+    required this.currentUser,
+  });
 
   final ReportDisplayRow row;
   final UserProfile currentUser;
@@ -19,90 +24,292 @@ class ReportDetailsScreen extends StatefulWidget {
 }
 
 class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
-  bool isDeleting = false;
+  bool _isDeleting = false;
+  bool _isRefreshing = false;
+  CircleReport? _fullReport;
+
+  ReportDisplayRow get _resolvedRow =>
+      widget.row.copyWith(report: _fullReport ?? widget.row.report);
+
+  CircleReport get _report => _resolvedRow.report;
+
+  bool get _canEdit =>
+      !widget.currentUser.isStudent && _resolvedRow.report.id.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _fullReport = widget.row.report;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadReportDetails());
+  }
+
+  Future<void> _loadReportDetails({bool showFailureToast = false}) async {
+    final reportId = widget.row.report.id.trim();
+    if (reportId.isEmpty) {
+      return;
+    }
+
+    setState(() => _isRefreshing = true);
+
+    try {
+      final report = await context.read<ReportService>().fetchReport(reportId);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _fullReport = report);
+    } catch (_) {
+      if (showFailureToast && mounted) {
+        showToast(
+          context,
+          'تعذر تحديث تفاصيل التقرير بالكامل، وتم عرض البيانات المتاحة.',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final row = widget.row;
-    final report = row.report;
-    final canEdit = !widget.currentUser.isStudent && report.id.isNotEmpty;
-
     return PageTransitionWrapper(
       child: Scaffold(
         appBar: AppBar(
           title: const Text('تفاصيل التقرير'),
           actions: [
-            if (canEdit) ...[
+            if (_canEdit) ...[
               IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReportFormScreen(currentUser: widget.currentUser, existingReport: report))),
+                tooltip: 'تعديل التقرير',
+                icon: const Icon(
+                  Icons.edit_outlined,
+                  semanticLabel: 'تعديل التقرير',
+                ),
+                onPressed: () async {
+                  final result = await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ReportFormScreen(
+                        currentUser: widget.currentUser,
+                        existingReport: _report,
+                      ),
+                    ),
+                  );
+
+                  if (result != null && mounted) {
+                    await _loadReportDetails(showFailureToast: true);
+                  }
+                },
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline),
-                onPressed: isDeleting ? null : _delete,
-              )
-            ]
+                tooltip: 'حذف التقرير',
+                icon: const Icon(
+                  Icons.delete_outline,
+                  semanticLabel: 'حذف التقرير',
+                ),
+                onPressed: _isDeleting ? null : _delete,
+              ),
+            ],
           ],
         ),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            ListTile(title: const Text('البيانات العامة', style: TextStyle(fontWeight: FontWeight.bold))),
-            _item('الطالب', getStudentName(row)),
-            _item('الحلقة', getCircleName(row)),
-            _item('المعلم', getTeacherName(row)),
-            _item('الحالة', getStatusLabel(report.attendStatueId)),
-            _item('الدقائق', displayValue(report.minutes)),
-            _item('وقت الإنشاء', formatDate(report.creationTime)),
-            const Divider(),
-            ListTile(title: const Text('الدرس الجديد', style: TextStyle(fontWeight: FontWeight.bold))),
-            _item('السورة الجديدة', resolveSurahName(report.newId)),
-            _item('الجديد من', displayValue(report.newFrom)),
-            _item('الجديد إلى', displayValue(report.newTo)),
-            _item('التقييم العام', displayValue(report.generalRate)),
-            const Divider(),
-            ListTile(title: const Text('المراجعة', style: TextStyle(fontWeight: FontWeight.bold))),
-            _item('الماضي القريب', displayValue(report.recentPast)),
-            _item('الماضي البعيد', displayValue(report.distantPast)),
-            _item('الأبعد', displayValue(report.farthestPast)),
-            const Divider(),
-            ListTile(title: const Text('متابعة إضافية', style: TextStyle(fontWeight: FontWeight.bold))),
-            _item('غريب القرآن', displayValue(report.theWordsQuranStranger)),
-            _item('التجويد', displayValue(report.intonation)),
-            _item('مرئي', report.isVisual == null ? '-' : (report.isVisual! ? 'نعم' : 'لا')),
-            _item('الواجب القادم', displayValue(report.nextCircleOrder)),
-            _item('ملاحظات أخرى', displayValue(report.other)),
+            if (_isRefreshing) ...[
+              const LinearProgressIndicator(minHeight: 2),
+              const SizedBox(height: 16),
+            ],
+            _DetailsSection(
+              title: 'البيانات العامة',
+              children: [
+                _DetailItem(label: 'المشرف', value: getManagerName(_report)),
+                _DetailItem(label: 'المعلم', value: getTeacherName(_resolvedRow)),
+                _DetailItem(label: 'الحلقة', value: getCircleName(_resolvedRow)),
+                _DetailItem(label: 'الطالب', value: getStudentName(_resolvedRow)),
+                _DetailItem(
+                  label: 'حالة الحضور',
+                  value: getStatusLabel(_report.attendStatueId),
+                ),
+                _DetailItem(
+                  label: 'عدد الدقائق',
+                  value: displayValue(_report.minutes),
+                ),
+                _DetailItem(
+                  label: 'تاريخ التقرير',
+                  value: formatDate(_report.creationTime),
+                ),
+                _DetailItem(
+                  label: 'الحصة مرئية',
+                  value: getVisualLabel(_report.isVisual),
+                ),
+                _DetailItem(
+                  label: 'مقرر الحصة القادمة',
+                  value: displayValue(_report.nextCircleOrder),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _DetailsSection(
+              title: 'الدرس الجديد',
+              children: [
+                _DetailItem(
+                  label: 'السورة الجديدة',
+                  value: resolveSurahName(_report.newId),
+                ),
+                _DetailItem(label: 'من', value: displayValue(_report.newFrom)),
+                _DetailItem(label: 'إلى', value: displayValue(_report.newTo)),
+                _DetailItem(
+                  label: 'تقييم الدرس الجديد',
+                  value: displayValue(_report.newRate),
+                ),
+                _DetailItem(
+                  label: 'التقييم العام',
+                  value: displayValue(_report.generalRate),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _DetailsSection(
+              title: 'المراجعة',
+              children: [
+                _DetailItem(
+                  label: 'المراجعة القريبة',
+                  value: displayValue(_report.recentPast),
+                ),
+                _DetailItem(
+                  label: 'تقييم المراجعة القريبة',
+                  value: displayValue(_report.recentPastRate),
+                ),
+                _DetailItem(
+                  label: 'المراجعة البعيدة',
+                  value: displayValue(_report.distantPast),
+                ),
+                _DetailItem(
+                  label: 'تقييم المراجعة البعيدة',
+                  value: displayValue(_report.distantPastRate),
+                ),
+                _DetailItem(
+                  label: 'المراجعة الأبعد',
+                  value: displayValue(_report.farthestPast),
+                ),
+                _DetailItem(
+                  label: 'تقييم المراجعة الأبعد',
+                  value: displayValue(_report.farthestPastRate),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _DetailsSection(
+              title: 'ملاحظات إضافية',
+              children: [
+                _DetailItem(
+                  label: 'كلمات غريب القرآن',
+                  value: displayValue(_report.theWordsQuranStranger),
+                ),
+                _DetailItem(
+                  label: 'التجويد',
+                  value: displayValue(_report.intonation),
+                ),
+                _DetailItem(
+                  label: 'ملاحظات أخرى',
+                  value: displayValue(_report.other),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _item(String k, String v) => ListTile(title: Text(k), subtitle: Text(v));
-
   Future<void> _delete() async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('حذف التقرير'),
-        content: const Text('هل انت متاكد من حذف التقرير؟'),
+        content: const Text('هل أنت متأكد من حذف التقرير؟'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('لا')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('نعم')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('حذف'),
+          ),
         ],
       ),
     );
     if (ok != true) return;
-    setState(() => isDeleting = true);
+
+    setState(() => _isDeleting = true);
+
     try {
-      await context.read<ReportService>().deleteReport(widget.row.report.id);
+      await context.read<ReportService>().deleteReport(_report.id);
       if (mounted) {
         showToast(context, 'تم حذف التقرير');
         Navigator.pop(context, true);
       }
     } catch (e) {
-      if (mounted) showToast(context, e.toString(), isError: true);
+      if (mounted) {
+        showToast(context, e.toString(), isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
     }
-    if (mounted) setState(() => isDeleting = false);
+  }
+}
+
+class _DetailsSection extends StatelessWidget {
+  const _DetailsSection({
+    required this.title,
+    required this.children,
+  });
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailItem extends StatelessWidget {
+  const _DetailItem({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(label),
+      subtitle: Text(value),
+    );
   }
 }

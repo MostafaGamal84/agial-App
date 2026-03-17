@@ -1,4 +1,4 @@
-// models/circle_report.dart (بس الجزء المهم)
+// models/circle_report.dart
 
 enum AttendStatus {
   attended,
@@ -8,7 +8,7 @@ enum AttendStatus {
   String get label {
     switch (this) {
       case AttendStatus.attended:
-        return 'حضر';
+        return 'حضور';
       case AttendStatus.ExcusedAbsence:
         return 'غياب بعذر';
       case AttendStatus.UnexcusedAbsence:
@@ -46,7 +46,7 @@ class CircleReport {
   final String? teacherId;
   final String? managerId;
   final String circleId;
-  final int? studentId;        // 👈 هنا التغيير المهم
+  final int? studentId;
   final AttendStatus attendStatueId;
   final int? minutes;
   final int? newId;
@@ -190,7 +190,7 @@ class CircleReport {
       'teacherId': teacherId,
       'managerId': managerId,
       'circleId': circleId,
-      'studentId': studentId,            // 👈 يترسّل كـ int?
+      'studentId': studentId,
       'attendStatueId': attendStatueId.toApi,
       'minutes': minutes,
       'newId': newId,
