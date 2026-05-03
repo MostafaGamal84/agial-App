@@ -7,7 +7,7 @@ import '../controllers/auth_controller.dart';
 import '../theme/app_colors.dart';
 import '../widgets/page_transition_wrapper.dart';
 import 'login_screen.dart';
-import 'reports_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 700));
     if (!mounted) return;
 
-    final nextPage = auth.currentUser == null ? const LoginScreen() : const ReportsScreen();
+    final nextPage = auth.currentUser == null ? const LoginScreen() : const HomeScreen();
 
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => nextPage));
   }

@@ -5,7 +5,7 @@ import '../controllers/auth_controller.dart';
 import '../theme/app_colors.dart';
 import '../widgets/page_transition_wrapper.dart';
 import '../widgets/toast.dart';
-import 'reports_screen.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         if (user != null) {
                                           showToast(context, 'تم تسجيل الدخول بنجاح');
                                           Navigator.of(context).pushAndRemoveUntil(
-                                            MaterialPageRoute(builder: (_) => const ReportsScreen()),
+                                            MaterialPageRoute(builder: (_) => const HomeScreen()),
                                             (route) => false,
                                           );
                                         }

@@ -63,6 +63,8 @@ class CircleReport {
   final String? theWordsQuranStranger;
   final String? other;
   final String? generalRate;
+  final double? teacherSalaryMinutes;
+  final double? teacherSalaryAmount;
   final bool? isVisual;
   final String? nextCircleOrder;
 
@@ -89,6 +91,8 @@ class CircleReport {
     required this.intonation,
     required this.other,
     required this.generalRate,
+    required this.teacherSalaryMinutes,
+    required this.teacherSalaryAmount,
     required this.isVisual,
     required this.nextCircleOrder,
   });
@@ -126,6 +130,8 @@ class CircleReport {
       intonation: json['intonation']?.toString(),
       other: json['other']?.toString(),
       generalRate: json['generalRate']?.toString() ?? json['newRate']?.toString(),
+      teacherSalaryMinutes: (json['teacherSalaryMinutes'] as num?)?.toDouble(),
+      teacherSalaryAmount: (json['teacherSalaryAmount'] as num?)?.toDouble(),
       isVisual: json['isVisual'] as bool?,
       nextCircleOrder: json['nextCircleOrder']?.toString(),
     );
@@ -154,6 +160,8 @@ class CircleReport {
     String? theWordsQuranStranger,
     String? other,
     String? generalRate,
+    double? teacherSalaryMinutes,
+    double? teacherSalaryAmount,
     bool? isVisual,
     String? nextCircleOrder,
   }) {
@@ -180,6 +188,8 @@ class CircleReport {
       theWordsQuranStranger: theWordsQuranStranger ?? this.theWordsQuranStranger,
       other: other ?? this.other,
       generalRate: generalRate ?? this.generalRate,
+      teacherSalaryMinutes: teacherSalaryMinutes ?? this.teacherSalaryMinutes,
+      teacherSalaryAmount: teacherSalaryAmount ?? this.teacherSalaryAmount,
       isVisual: isVisual ?? this.isVisual,
       nextCircleOrder: nextCircleOrder ?? this.nextCircleOrder,
     );

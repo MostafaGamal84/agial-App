@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/page_transition_wrapper.dart';
 import '../widgets/toast.dart';
-import 'reports_screen.dart';
+import 'home_screen.dart';
 
 class OTPScreen extends StatefulWidget {
   const OTPScreen({super.key, required this.loginValue, this.initialCode});
@@ -235,7 +235,7 @@ class _OTPScreenState extends State<OTPScreen> {
                               );
                               Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(
-                                  builder: (_) => const ReportsScreen(),
+                                  builder: (_) => const HomeScreen(),
                                 ),
                                 (route) => false,
                               );
